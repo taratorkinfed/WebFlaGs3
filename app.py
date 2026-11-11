@@ -86,7 +86,7 @@ def _demo() -> str:
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-	if flask.request.method == "GET":
+	if flask.request.method != "POST":
 		submission = Submission()
 		if flask.request.args.get("demo"):
 			submission.lines = [line for line in _demo().splitlines() if line.strip()]
