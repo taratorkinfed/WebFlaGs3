@@ -8,6 +8,7 @@ from pathlib import Path
 import rq
 
 from config import Settings
+from mailer import Notice
 from submission import Command, Submission
 
 LOG_LIMIT = 200_000
@@ -196,4 +197,12 @@ def run_job(job_id: str) -> dict:
 	settings = Settings.load()
 	Sweeper(settings.jobs_dir, settings.results_ttl_hours).sweep()
 	job = rq.get_current_job()
-	return Runner(settings, JobDir(settings.jobs_dir, job_id), job).run()
+	job_dir = JobDir(settings.jobs_dir, job_id)
+	notice = Notice(settings, job_id, job_dir.submission())
+	try:
+		result = Runner(settings, job_dir, job).run()
+	except Exception:
+		notice.failed()
+		raise
+	result["notified"] = notice.finished()
+	return result

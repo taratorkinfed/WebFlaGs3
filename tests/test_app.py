@@ -77,6 +77,7 @@ def test_health(client):
 	data = client.get("/health").get_json()
 	assert data["status"] == "ok" and data["redis"]
 	assert data["features"] == ["tree", "mmseqs", "domains", "defensefinder", "genomad", "plasmidfinder", "sismis"]
+	assert data["mail"] is True
 
 
 def test_job_with_scanners(client, flask_app):
@@ -94,3 +95,31 @@ def test_job_with_scanners(client, flask_app):
 	assert "-cm mmseqs_cluster" in status["log"] and " -n " not in status["log"] and "-ce" not in status["log"]
 	bad = client.post("/", data={**FORM, "genomad": "1", "scan_range": "7"})
 	assert bad.status_code == 400 and b"Must be between 5000 and 200000" in bad.data
+
+
+def test_emails_on_finish_and_failure(client, flask_app, smtp):
+	page = client.get("/")
+	assert b'id="notify" name="notify" value="1" checked' in page.data
+	job_id = client.post("/", data={**FORM, "notify": "1"}).headers["Location"].rsplit("/", 1)[1]
+	running = client.get("/results/" + job_id)
+	assert b"You can close it" in running.data
+	_work(flask_app)
+	assert len(smtp.sent) == 1
+	message = smtp.sent[0][4]
+	assert message["To"] == "fed@example.org" and message["Subject"] == "FlaGs3 job finished: webrun"
+	assert "https://flags.example.org/results/" + job_id in message.get_content()
+	assert b"also emailed to you" in client.get("/results/" + job_id).data
+	failed_id = client.post("/", data={**FORM, "notify": "1", "accessions": "WP_FAIL.1"}).headers["Location"].rsplit("/", 1)[1]
+	_work(flask_app)
+	assert len(smtp.sent) == 2 and smtp.sent[1][4]["Subject"] == "FlaGs3 job failed: webrun"
+	assert failed_id in smtp.sent[1][4].get_content()
+
+
+def test_no_email_when_unticked_and_job_survives_smtp_failure(client, flask_app, smtp):
+	quiet = client.post("/", data=FORM).headers["Location"].rsplit("/", 1)[1]
+	_work(flask_app)
+	assert smtp.sent == [] and b"no email is sent" in client.get("/results/" + quiet).data
+	smtp.fail = True
+	job_id = client.post("/", data={**FORM, "notify": "1"}).headers["Location"].rsplit("/", 1)[1]
+	_work(flask_app)
+	assert client.get("/status/" + job_id).get_json()["status"] == "finished" and smtp.sent == []

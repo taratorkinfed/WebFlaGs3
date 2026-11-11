@@ -16,6 +16,12 @@ DEFAULTS = {
 	"max_lines": "200",
 	"lab_url": "https://server.atkinson-lab.com",
 	"site_name": "FlaGs3",
+	"site_url": "https://flags.atkinson-lab.com",
+	"smtp_host": "smtps.lu.se",
+	"smtp_port": "587",
+	"smtp_user": "",
+	"mail_from": "",
+	"email_pass": "",
 }
 
 
@@ -34,6 +40,12 @@ class Settings:
 		self.max_lines = int(merged["max_lines"])
 		self.lab_url = merged["lab_url"].rstrip("/")
 		self.site_name = merged["site_name"]
+		self.site_url = merged["site_url"].rstrip("/")
+		self.smtp_host = merged["smtp_host"]
+		self.smtp_port = int(merged["smtp_port"])
+		self.smtp_user = merged["smtp_user"]
+		self.mail_from = merged["mail_from"]
+		self.email_pass = merged["email_pass"]
 
 	@property
 	def results_ttl(self) -> str:

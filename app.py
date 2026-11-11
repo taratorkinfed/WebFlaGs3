@@ -11,6 +11,7 @@ from rq.exceptions import NoSuchJobError
 from capabilities import Capabilities
 from config import Settings
 from jobs import JobDir, run_job
+from mailer import Mailer
 from submission import SCANNERS, Submission, Validator
 
 settings = Settings.load()
@@ -20,6 +21,7 @@ redis_connection = redis.from_url(settings.redis_url)
 queue = rq.Queue(name=settings.queue, connection=redis_connection)
 capabilities = Capabilities.probe(settings)
 validator = Validator(settings.max_lines, capabilities)
+mail_enabled = Mailer(settings).enabled
 
 DEMO_FILE = "demo_list.txt"
 JOB_ID = re.compile(r"^[0-9a-f]{32}$")
@@ -59,7 +61,8 @@ class JobStatus:
 
 
 def _page(template: str, **context):
-	return flask.render_template(template, settings=settings, capabilities=capabilities, scanners=SCANNERS, **context)
+	return flask.render_template(template, settings=settings, capabilities=capabilities, scanners=SCANNERS,
+		mail_enabled=mail_enabled, **context)
 
 
 def _fetch(job_id: str):
@@ -148,7 +151,7 @@ def download(job_id: str):
 @app.route("/health")
 def health():
 	return flask.jsonify({"status": "ok", "redis": bool(redis_connection.ping()), "queued": len(queue),
-		"features": capabilities.features})
+		"features": capabilities.features, "mail": mail_enabled})
 
 
 @app.errorhandler(404)

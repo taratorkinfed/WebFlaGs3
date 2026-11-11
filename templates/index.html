@@ -141,7 +141,15 @@
 					<label for="email" class="form-label required">Email</label>
 					<input class="form-control{% if submission.errors.email %} is-invalid{% endif %}" type="email" id="email" name="email" value="{{ submission.email }}" required>
 					<div class="invalid-feedback">{{ submission.errors.email }}</div>
-					<div class="form-text">Passed to NCBI with every request, as their Entrez service requires. Nothing is sent to it.</div>
+					<div class="form-text">Passed to NCBI with every request, as their Entrez service requires.</div>
+					{% if mail_enabled %}
+					<div class="form-check mt-2">
+						<input class="form-check-input" type="checkbox" id="notify" name="notify" value="1" {% if submission.notify %}checked{% endif %}>
+						<label class="form-check-label" for="notify">Email me the results link when the job ends</label>
+					</div>
+					{% else %}
+					<div class="form-text">This server sends no email; keep the results page's address.</div>
+					{% endif %}
 				</div>
 				<div class="col-md-6">
 					<label for="run_name" class="form-label">Run name</label>

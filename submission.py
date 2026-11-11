@@ -47,6 +47,7 @@ class Submission:
 	scanners: list[str] = field(default_factory=list)
 	scan_range: int = 20000
 	pdf: bool = True
+	notify: bool = True
 	email: str = ""
 	run_name: str = "flags3_run"
 	errors: dict[str, str] = field(default_factory=dict)
@@ -98,6 +99,7 @@ class Validator:
 		s.scanners = [sc.name for sc in SCANNERS if form.get(sc.name) and self.capabilities.has(sc.name)]
 		s.scan_range = self._integer(form, "scan_range", s.scan_range, SCAN_RANGE, s.errors)
 		s.pdf = bool(form.get("pdf"))
+		s.notify = bool(form.get("notify"))
 		s.email = form.get("email", "").strip()
 		if not EMAIL.match(s.email):
 			s.errors["email"] = "A valid email address is required: NCBI asks for one with every request FlaGs3 makes on your behalf."

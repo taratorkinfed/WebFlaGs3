@@ -2,7 +2,7 @@
 
 ## Shape
 
-Five Python files, five templates, no database beyond Redis.
+Six Python files, five templates, no database beyond Redis.
 
 - `config.py` — `Settings`, read once from `.env` (python-dotenv). Nothing
   machine-specific or secret is in code; `DEFAULTS` are the lab server's paths.
@@ -45,6 +45,9 @@ Five Python files, five templates, no database beyond Redis.
 - `jobs.py` — `JobDir` (the layout of one job's directory), `Runner` (worker
   side: run the subprocess, stream its output into RQ meta, scrub, archive),
   `Sweeper` (delete expired job directories), `run_job` (the RQ entry point).
+- `mailer.py` — `Mailer` (one plain-text message through SMTP with
+  STARTTLS and a login) and `Notice` (the finished and failed texts for one
+  job, with its results link built from `site_url`).
 - `app.py` — Flask routes and `JobStatus`, the view model of an RQ job.
 
 ## Request flow
@@ -72,6 +75,26 @@ Five Python files, five templates, no database beyond Redis.
    directory; a script polls `GET /status/<id>` every two seconds, refreshes
    the log in place while the job runs, and reloads the page when the state
    changes.
+
+## Email
+
+Testers close the tab, so a job tells its submitter when it ends. The route
+is the one the lab server already uses: `smtps.lu.se:587`, STARTTLS, a
+function account's login (`smtp_user`, `email_pass`) and the lab's sender
+address (`mail_from`), all from `.env`. Mail is on only when all three are
+set; `Mailer.enabled` is what the form and the results page ask, so a
+server without credentials says "no email is sent" instead of promising
+one. The form's box is ticked by default and the submitter can untick it.
+
+`run_job` builds the `Notice` before the run and sends after it: the
+finished text when `Runner.run` returns, the failed text when it raises
+(the exception is re-raised, so RQ still records the failure). Sending
+happens in the worker, which is why the link comes from `site_url` and not
+from a request. A message that cannot be sent — SMTP down, login refused
+— returns `False` and never fails the job; `notified` in the job's result
+records which it was. A worker killed outright (a restart mid-job) sends
+nothing. The address is validated to contain no whitespace and the run
+name to a fixed alphabet before either reaches a header.
 
 ## What the user can reach
 
@@ -121,8 +144,7 @@ spinner). Refresh the copies when the lab stylesheet changes.
 
 ## Not in v1
 
-Emails on completion, a prioritised queue, a job list page, and three
-FlaGs3 features left out on purpose: BLAST-mode input (a local database
-needs a decision on where tens of GB live), DeepTMHMM and SignalP (BioLib
-login or licensed local installs). Email needs the SMTP credentials in
-`.env` and an `on_success` callback.
+A prioritised queue, a job list page, and three FlaGs3 features left out
+on purpose: BLAST-mode input (a local database needs a decision on where
+tens of GB live), DeepTMHMM and SignalP (BioLib login or licensed local
+installs).

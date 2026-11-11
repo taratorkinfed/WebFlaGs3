@@ -37,7 +37,7 @@
 							<span class="fw-medium">Started at:</span> {{ status.stamp("started_at") }}<br>
 							<span class="fw-medium">Finished at:</span> {{ status.stamp("ended_at") }}</p>
 						<p class="fs-5">This page stays available until <span class="fst-italic">{{ status.stored_until }}</span>.
-							Bookmark it; there is no email.</p>
+							{% if mail_enabled and submission.notify %}Its address was also emailed to you.{% else %}Bookmark it; no email is sent.{% endif %}</p>
 					</div>
 				{% else %}
 					<div class="col-12">
@@ -107,7 +107,8 @@
 				{% if not status.final %}
 					<hr>
 					<div class="col-auto">
-						<p class="fs-5 fw-light">This page reloads by itself when the job changes state.</p>
+						<p class="fs-5 fw-light">This page reloads by itself when the job changes state.
+							{% if mail_enabled and submission.notify %}You can close it: an email with this address is sent when the job ends.{% else %}Keep its address if you close it; no email is sent.{% endif %}</p>
 					</div>
 					<div class="col-auto">
 						<div class="spinner-flags3"></div>
