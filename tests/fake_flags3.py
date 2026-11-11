@@ -7,7 +7,21 @@ from pathlib import Path
 SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="40"><text x="5" y="25">{}</text></svg>\n'
 
 
+LISTING = """core           installed  -                       mafft, trimal, VeryFastTree
+pfam           installed  38.0                    Pfam-A HMMs
+interpro       -          -                       InterPro metadata table
+genomad        installed  1.12.0 / db 1.9         geNomad and its database
+plasmidfinder  2.1.6      -                       PlasmidFinder replicon database
+defensefinder  installed  3.0.0                   DefenseFinder
+padloc         -          -                       PadLoc
+sismis         on PATH    -                       Sismis
+"""
+
+
 def main() -> int:
+	if sys.argv[1:2] == ["install"]:
+		print(LISTING, end="")
+		return 0
 	parser = argparse.ArgumentParser()
 	parser.add_argument("command")
 	parser.add_argument("-i", action="append", default=[])
@@ -23,6 +37,12 @@ def main() -> int:
 	parser.add_argument("-t", action="store_true")
 	parser.add_argument("-to", action="store_true")
 	parser.add_argument("-d", action="store_true")
+	parser.add_argument("-df", action="store_true")
+	parser.add_argument("-pl", action="store_true")
+	parser.add_argument("-gn", action="store_true")
+	parser.add_argument("-pf", action="store_true")
+	parser.add_argument("-ss", action="store_true")
+	parser.add_argument("-sr", type=int)
 	parser.add_argument("-pdf", action="store_true")
 	args = parser.parse_args()
 	out = Path(args.o)
@@ -38,6 +58,7 @@ def main() -> int:
 	(out / "figures").mkdir(parents=True)
 	(out / "report").mkdir(parents=True)
 	names = ["neighbors"] + (["tree"] if args.t or args.to else []) + (["domains"] if args.d else [])
+	names += ["all-in-one"] if (args.df or args.pl or args.gn or args.pf or args.ss) else []
 	for name in names:
 		(out / "figures" / (name + ".svg")).write_text(SVG.format(name))
 		if args.pdf:

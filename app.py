@@ -8,16 +8,18 @@ import rq
 from rq.job import Job
 from rq.exceptions import NoSuchJobError
 
+from capabilities import Capabilities
 from config import Settings
 from jobs import JobDir, run_job
-from submission import Submission, Validator
+from submission import SCANNERS, Submission, Validator
 
 settings = Settings.load()
 app = flask.Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
 redis_connection = redis.from_url(settings.redis_url)
 queue = rq.Queue(name=settings.queue, connection=redis_connection)
-validator = Validator(settings.max_lines, settings.domains_available)
+capabilities = Capabilities.probe(settings)
+validator = Validator(settings.max_lines, capabilities)
 
 DEMO_FILE = "demo_list.txt"
 JOB_ID = re.compile(r"^[0-9a-f]{32}$")
@@ -57,7 +59,7 @@ class JobStatus:
 
 
 def _page(template: str, **context):
-	return flask.render_template(template, settings=settings, **context)
+	return flask.render_template(template, settings=settings, capabilities=capabilities, scanners=SCANNERS, **context)
 
 
 def _fetch(job_id: str):
@@ -146,7 +148,7 @@ def download(job_id: str):
 @app.route("/health")
 def health():
 	return flask.jsonify({"status": "ok", "redis": bool(redis_connection.ping()), "queued": len(queue),
-		"domains": settings.domains_available})
+		"features": capabilities.features})
 
 
 @app.errorhandler(404)

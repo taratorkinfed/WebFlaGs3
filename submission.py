@@ -8,6 +8,25 @@ TREE_CHOICES = ("none", "tree", "tree_order")
 GENE_RANGE = (1, 20)
 ITERATION_RANGE = (1, 10)
 EVALUE_RANGE = (1e-100, 1.0)
+SCAN_RANGE = (5000, 200000)
+
+
+@dataclass(frozen=True)
+class Scanner:
+	name: str
+	flag: str
+	label: str
+	note: str
+	windowed: bool = False
+
+
+SCANNERS = (
+	Scanner("defensefinder", "-df", "DefenseFinder", "Anti-phage defence systems among the flanking genes."),
+	Scanner("padloc", "-pl", "PadLoc", "Anti-phage defence systems; one both tools agree on is drawn once."),
+	Scanner("genomad", "-gn", "geNomad", "Proviruses and plasmid signal in the sequence around each query.", True),
+	Scanner("plasmidfinder", "-pf", "PlasmidFinder", "Plasmid replicon types on the contig carrying each query."),
+	Scanner("sismis", "-ss", "Sismis", "Secretion systems in the sequence around each query.", True),
+)
 
 
 @dataclass
@@ -18,6 +37,8 @@ class Submission:
 	evalue: float = 1e-10
 	tree: str = "none"
 	domains: bool = False
+	scanners: list[str] = field(default_factory=list)
+	scan_range: int = 20000
 	pdf: bool = True
 	email: str = ""
 	run_name: str = "flags3_run"
@@ -41,9 +62,9 @@ class Submission:
 
 
 class Validator:
-	def __init__(self, max_lines: int, domains_available: bool):
+	def __init__(self, max_lines: int, capabilities):
 		self.max_lines = max_lines
-		self.domains_available = domains_available
+		self.capabilities = capabilities
 
 	def parse(self, form, upload_text: str = "") -> Submission:
 		s = Submission()
@@ -57,7 +78,11 @@ class Validator:
 		s.tree = form.get("tree", "none")
 		if s.tree not in TREE_CHOICES:
 			s.errors["tree"] = "Unknown tree option."
-		s.domains = bool(form.get("domains")) and self.domains_available
+		elif not self.capabilities.has("tree"):
+			s.tree = "none"
+		s.domains = bool(form.get("domains")) and self.capabilities.has("domains")
+		s.scanners = [sc.name for sc in SCANNERS if form.get(sc.name) and self.capabilities.has(sc.name)]
+		s.scan_range = self._integer(form, "scan_range", s.scan_range, SCAN_RANGE, s.errors)
 		s.pdf = bool(form.get("pdf"))
 		s.email = form.get("email", "").strip()
 		if not EMAIL.match(s.email):
@@ -136,6 +161,10 @@ class Command:
 			argv.append("-to")
 		if sub.domains:
 			argv.append("-d")
+		chosen = [sc for sc in SCANNERS if sc.name in sub.scanners]
+		argv += [sc.flag for sc in chosen]
+		if any(sc.windowed for sc in chosen):
+			argv += ["-sr", str(sub.scan_range)]
 		if sub.pdf:
 			argv.append("-pdf")
 		return argv

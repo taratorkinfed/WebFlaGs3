@@ -47,14 +47,6 @@ class Settings:
 		return "{} hour{}".format(hours, "" if hours == 1 else "s")
 
 	@property
-	def pfam(self) -> Path:
-		return self.flags3_home / "db" / "pfam" / "Pfam-A.hmm"
-
-	@property
-	def domains_available(self) -> bool:
-		return self.pfam.is_file()
-
-	@property
 	def genomes_dir(self) -> Path:
 		return self.flags3_home / "genomes"
 

@@ -12,8 +12,9 @@
 					<p class="fs-6">Give FlaGs3 a list of protein accessions. For each one it fetches the genome, cuts out the
 						flanking genes, clusters all flanking proteins into homologous families with jackhmmer, and draws the
 						neighbourhoods side by side with families in matching colours, so that conserved gene context stands out.
-						Optionally it builds a phylogenetic tree of the query proteins and annotates Pfam domains on every
-						flanking protein. Results stay on the server for {{ settings.retention }} and can be
+						Optionally it builds a phylogenetic tree of the query proteins, annotates Pfam domains on every
+						flanking protein, and looks for defence systems, proviruses, plasmid replicons and secretion systems
+						around the queries. Results stay on the server for {{ settings.retention }} and can be
 						downloaded as one archive.</p>
 					<p class="fs-6">This is the FlaGs3 web service; the command-line tool with all its options is on
 						<a href="https://github.com/GCA-VH-lab/FlaGs3">GitHub</a>. The previous version runs as
@@ -63,26 +64,46 @@
 				</div>
 				<div class="col-md-4">
 					<label for="tree" class="form-label">Phylogenetic tree of the queries</label>
-					<select class="form-select" id="tree" name="tree">
+					<select class="form-select" id="tree" name="tree" {% if not capabilities.has("tree") %}disabled{% endif %}>
 						<option value="none" {% if submission.tree == "none" %}selected{% endif %}>No tree</option>
 						<option value="tree" {% if submission.tree == "tree" %}selected{% endif %}>Tree, rows in input order</option>
 						<option value="tree_order" {% if submission.tree == "tree_order" %}selected{% endif %}>Tree, rows in tree order</option>
 					</select>
-					<div class="form-text">mafft, trimAl and VeryFastTree; adds minutes for large lists.</div>
+					<div class="form-text">{% if capabilities.has("tree") %}mafft, trimAl and VeryFastTree; adds minutes for large lists.{% else %}Not available on this server yet.{% endif %}</div>
 				</div>
 				<div class="col-md-4">
 					<div class="form-check form-switch mt-md-4 pt-md-2">
 						<input class="form-check-input" type="checkbox" id="domains" name="domains" value="1"
-							{% if submission.domains %}checked{% endif %} {% if not settings.domains_available %}disabled{% endif %}>
+							{% if submission.domains %}checked{% endif %} {% if not capabilities.has("domains") %}disabled{% endif %}>
 						<label class="form-check-label" for="domains">Pfam domains on flanking proteins</label>
 					</div>
-					{% if not settings.domains_available %}<div class="form-text">Not available on this server yet.</div>{% endif %}
+					{% if not capabilities.has("domains") %}<div class="form-text">Not available on this server yet.</div>{% endif %}
 				</div>
 				<div class="col-md-4">
 					<div class="form-check form-switch mt-md-4 pt-md-2">
 						<input class="form-check-input" type="checkbox" id="pdf" name="pdf" value="1" {% if submission.pdf %}checked{% endif %}>
 						<label class="form-check-label" for="pdf">PDF beside every figure</label>
 					</div>
+				</div>
+				<div class="col-md-12">
+					<h5>Systems and mobile elements</h5>
+					<p>Each tool adds its calls to the figures and a table to the report, and time to the job.</p>
+				</div>
+				{% for scanner in scanners %}
+				<div class="col-md-6">
+					<div class="form-check form-switch">
+						<input class="form-check-input" type="checkbox" id="{{ scanner.name }}" name="{{ scanner.name }}" value="1"
+							{% if scanner.name in submission.scanners %}checked{% endif %} {% if not capabilities.has(scanner.name) %}disabled{% endif %}>
+						<label class="form-check-label" for="{{ scanner.name }}">{{ scanner.label }}</label>
+					</div>
+					<div class="form-text">{% if capabilities.has(scanner.name) %}{{ scanner.note }}{% else %}Not available on this server yet.{% endif %}</div>
+				</div>
+				{% endfor %}
+				<div class="col-md-6">
+					<label for="scan_range" class="form-label">Sequence scanned each side of the query, bp</label>
+					<input class="form-control{% if submission.errors.scan_range %} is-invalid{% endif %}" type="number" id="scan_range" name="scan_range" min="5000" max="200000" step="1000" value="{{ submission.scan_range }}">
+					<div class="invalid-feedback">{{ submission.errors.scan_range }}</div>
+					<div class="form-text">For geNomad and Sismis. PlasmidFinder always reads the whole contig; the defence tools read the flanking genes.</div>
 				</div>
 				<div class="col-md-12">
 					<h5>Run</h5>

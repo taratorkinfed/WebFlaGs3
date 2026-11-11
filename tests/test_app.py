@@ -17,6 +17,10 @@ def _work(flask_app):
 def test_form_page_and_demo(client):
 	page = client.get("/")
 	assert page.status_code == 200 and b"Accession list" in page.data and b"Pfam domains" in page.data
+	html = page.data.decode()
+	padloc = html[html.index('id="padloc"'):html.index('id="padloc"') + 200]
+	genomad = html[html.index('id="genomad"'):html.index('id="genomad"') + 200]
+	assert "disabled" in padloc and "disabled" not in genomad
 	assert client.head("/").status_code == 200
 	demo = client.get("/?demo=1")
 	assert b"WP_028660106.1" in demo.data and b"WP_028275955.1" in demo.data
@@ -71,4 +75,19 @@ def test_unknown_job_is_expired_page(client):
 
 def test_health(client):
 	data = client.get("/health").get_json()
-	assert data["status"] == "ok" and data["redis"] and data["domains"]
+	assert data["status"] == "ok" and data["redis"]
+	assert data["features"] == ["tree", "domains", "defensefinder", "genomad", "plasmidfinder", "sismis"]
+
+
+def test_job_with_scanners(client, flask_app):
+	page = client.post("/", data={**FORM, "tree": "none", "genomad": "1", "defensefinder": "1", "padloc": "1", "scan_range": "30000"})
+	assert page.status_code == 302
+	job_id = page.headers["Location"].rsplit("/", 1)[1]
+	_work(flask_app)
+	status = client.get("/status/" + job_id).get_json()
+	assert status["status"] == "finished"
+	assert "-df" in status["log"] and "-gn" in status["log"] and "-sr 30000" in status["log"] and "-pl" not in status["log"]
+	done = client.get("/results/" + job_id)
+	assert b"figures/all-in-one.svg" in done.data
+	bad = client.post("/", data={**FORM, "genomad": "1", "scan_range": "7"})
+	assert bad.status_code == 400 and b"Must be between 5000 and 200000" in bad.data

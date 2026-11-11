@@ -15,8 +15,7 @@ SECRET = "TESTAPIKEY123"
 def workspace(tmp_path_factory):
 	base = tmp_path_factory.mktemp("flags3_web")
 	home = base / "home"
-	(home / "db" / "pfam").mkdir(parents=True)
-	(home / "db" / "pfam" / "Pfam-A.hmm").write_text("HMMER3/f\n")
+	home.mkdir()
 	env = base / ".env"
 	env.write_text("\n".join([
 		"flags3_bin=" + str(ROOT / "tests" / "fake_flags3.py"),

@@ -4,6 +4,7 @@ import zipfile
 
 from config import Settings
 from jobs import JobDir, Runner, Sweeper
+from capabilities import Capabilities
 from submission import Validator
 
 
@@ -11,7 +12,7 @@ def _submission(text="WP_1.1\nAAC73113.1\tU00096\n", **extra):
 	form = {"accessions": text, "gene": "3", "iterations": "2", "evalue": "1e-5", "tree": "tree", "pdf": "1",
 		"email": "a@b.cd", "run_name": "demo"}
 	form.update(extra)
-	return Validator(200, True).parse(form)
+	return Validator(200, Capabilities.everything()).parse(form)
 
 
 def test_runner_produces_run_archive_and_scrubbed_log(workspace):

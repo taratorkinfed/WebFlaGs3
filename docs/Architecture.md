@@ -2,14 +2,35 @@
 
 ## Shape
 
-Four Python files, five templates, no database beyond Redis.
+Five Python files, five templates, no database beyond Redis.
 
 - `config.py` — `Settings`, read once from `.env` (python-dotenv). Nothing
   machine-specific or secret is in code; `DEFAULTS` are the lab server's paths.
 - `submission.py` — `Validator` turns a form into a `Submission`
   (validated fields plus an `errors` dict); `Command` turns a `Submission`
   into the `flags3 run` argv and environment. The web app's whole knowledge of
-  FlaGs3's command line is in `Command.argv`.
+  FlaGs3's command line is in `Command.argv` and the `SCANNERS` table beside
+  it: one row per optional tool (form name, flag, label, note, and whether
+  it scans sequence windows). The form section is rendered from that table,
+  so adding a tool is one row. `-sr` (the form's scan range, 20 000 bp each
+  side by default, 5 000–200 000) is passed only when a windowed scanner —
+  geNomad or Sismis — is selected; PlasmidFinder keeps its own
+  whole-contig span from the tools table and the defence tools read the
+  flanking proteins, so neither is affected by it.
+- `capabilities.py` — `Capabilities`, what this server's FlaGs3 can do.
+  At start-up the app runs `flags3 install` with no arguments, which lists
+  every component with its state, and keeps the names whose state is not
+  `-`. `FEATURES` maps each optional form control to the components it
+  needs (tree → core; domains → pfam; DefenseFinder, PadLoc, geNomad and
+  Sismis → their own component; PlasmidFinder → its database and core's
+  BLAST+). A control whose feature is missing is drawn disabled and its
+  value is dropped by the validator, so the form can never start a run the
+  server cannot finish. The web app holds no path into the FlaGs3 home for
+  this; FlaGs3 answers for itself. The probe runs once per process, so after
+  `flags3 install <component>` the web service is restarted to show it. One
+  ambiguity is inherited from that listing: a PlasmidFinder database
+  without its `commit.txt` stamp reports `-` and reads as absent; one
+  installed by `flags3 install plasmidfinder` always has the stamp.
 - `jobs.py` — `JobDir` (the layout of one job's directory), `Runner` (worker
   side: run the subprocess, stream its output into RQ meta, scrub, archive),
   `Sweeper` (delete expired job directories), `run_job` (the RQ entry point).
@@ -89,7 +110,8 @@ spinner). Refresh the copies when the lab stylesheet changes.
 
 ## Not in v1
 
-Emails on completion, a prioritised queue, BLAST-mode input, geNomad,
-DefenseFinder/PadLoc, BioLib tools, a job list page. Each is a form field plus
-an argv line in `Command.argv` when wanted, except email, which needs the
-SMTP credentials in `.env` and an `on_success` callback.
+Emails on completion, a prioritised queue, a job list page, and three
+FlaGs3 features left out on purpose: BLAST-mode input (a local database
+needs a decision on where tens of GB live), DeepTMHMM and SignalP (BioLib
+login or licensed local installs). Email needs the SMTP credentials in
+`.env` and an `on_success` callback.
