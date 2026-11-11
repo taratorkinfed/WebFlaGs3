@@ -53,6 +53,6 @@ def test_command_argv(tmp_path):
 	assert argv[argv.index("-c") + 1] == "6" and "-to" in argv and "-t" not in argv and "-d" in argv and "-pdf" not in argv
 	assert argv[argv.index("-ce") + 1] == "1e-10" and argv[argv.index("-cm") + 1] == "jackhmmer"
 	env = Command(settings, s, "a", "b").environment({"PATH": "/bin"})
-	assert env["FLAGS3_HOME"] == str(tmp_path) and env["PATH"] == "/bin"
+	assert env["FLAGS3_HOME"] == str(tmp_path) and env["PATH"] == "/bin" and env["PYTHONUNBUFFERED"] == "1"
 	settings = Settings({"flags3_bin": "/opt/flags3", "flags3_home": str(tmp_path)})
 	assert "-api" not in Command(settings, s, "a", "b").argv()

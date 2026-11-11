@@ -143,4 +143,5 @@ class Command:
 	def environment(self, base: dict) -> dict:
 		env = dict(base)
 		env["FLAGS3_HOME"] = str(self.settings.flags3_home)
+		env["PYTHONUNBUFFERED"] = "1"
 		return env

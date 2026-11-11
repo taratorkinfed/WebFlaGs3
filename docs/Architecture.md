@@ -28,7 +28,10 @@ Four Python files, five templates, no database beyond Redis.
    `failure_ttl` equal `results_ttl_hours`, so RQ forgets the job when the
    directory is due to go.
 3. `Runner.run` in the worker: `flags3 run -i input.txt -o run -nt …` with
-   `cwd` the job directory and `FLAGS3_HOME` in the environment. Stdout and
+   `cwd` the job directory and `FLAGS3_HOME` in the environment, plus
+   `PYTHONUNBUFFERED=1`: FlaGs3 is a Python program writing to a pipe, and
+   without it the interpreter holds its output in 8 kB blocks, so the page
+   would show nothing until the run ended. Stdout and
    stderr are read line by line (bytes split on `\n` only, so a tool's `\r`
    progress keeps only its last segment) into `job.meta["log"]`, saved at
    most twice a second, capped at 200 kB from the tail. A non-zero exit raises,

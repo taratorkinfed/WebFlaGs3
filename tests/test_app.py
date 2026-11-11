@@ -18,7 +18,7 @@ def test_form_page_and_demo(client):
 	page = client.get("/")
 	assert page.status_code == 200 and b"Accession list" in page.data and b"Pfam domains" in page.data
 	demo = client.get("/?demo=1")
-	assert b"AAC73113.1\tU00096" in demo.data
+	assert b"WP_028660106.1" in demo.data and b"WP_028275955.1" in demo.data
 
 
 def test_invalid_submission_rerenders_with_errors(client):
