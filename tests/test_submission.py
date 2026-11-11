@@ -16,7 +16,7 @@ def _form(**overrides):
 def test_good_form_is_accepted():
 	s = Validator(200, ALL).parse(_form())
 	assert s.accepted and s.lines == ["WP_000001.1", "AAC73113.1\tU00096"]
-	assert s.gene == 4 and s.iterations == 3 and s.evalue == 1e-10 and s.pdf and not s.domains
+	assert s.gene == 4 and s.iterations == 3 and s.evalue == 1e-10 and s.pdf and not s.domains and s.method == "jackhmmer"
 	assert s.run_name == "my_run" and s.email == "fed@example.org"
 
 
@@ -41,6 +41,8 @@ def test_field_errors():
 	s = Validator(200, ALL).parse(_form(gene="0", iterations="x", evalue="5", tree="weird", email="nope", run_name="bad name!"))
 	assert set(s.errors) == {"gene", "iterations", "evalue", "tree", "email", "run_name"}
 	assert s.gene == 0 and s.iterations == 3 and s.evalue == 5.0
+	s = Validator(200, ALL).parse(_form(evalue="tiny", method="phmmer"))
+	assert set(s.errors) == {"evalue", "method"}
 
 
 def test_extras_only_when_installed():
@@ -53,6 +55,22 @@ def test_extras_only_when_installed():
 	some = Validator(200, Capabilities({"genomad", "plasmidfinder"})).parse(asked)
 	assert some.scanners == ["genomad"]
 	assert Validator(200, Capabilities({"plasmidfinder", "core"})).parse(asked).scanners == ["plasmidfinder"]
+
+
+def test_clustering_method_and_defaults(tmp_path):
+	settings = Settings({"flags3_bin": "/opt/flags3", "flags3_home": str(tmp_path)})
+	s = Validator(200, ALL).parse(_form(evalue="", iterations="5"))
+	argv = Command(settings, s, "a", "b").argv()
+	assert s.evalue is None and "-ce" not in argv
+	assert argv[argv.index("-cm") + 1] == "jackhmmer" and argv[argv.index("-n") + 1] == "5"
+	s = Validator(200, ALL).parse(_form(method="mmseqs_cluster", evalue="", iterations="5"))
+	argv = Command(settings, s, "a", "b").argv()
+	assert argv[argv.index("-cm") + 1] == "mmseqs_cluster" and "-n" not in argv and "-ce" not in argv
+	s = Validator(200, ALL).parse(_form(method="mmseqs_cluster", evalue="1e-5"))
+	argv = Command(settings, s, "a", "b").argv()
+	assert argv[argv.index("-ce") + 1] == "1e-05" and "-n" not in argv
+	s = Validator(200, NONE).parse(_form(method="mmseqs_cluster"))
+	assert s.accepted and s.method == "jackhmmer"
 
 
 def test_capabilities_parse_the_install_listing():
@@ -69,9 +87,11 @@ def test_scan_range_bounds_and_argv(tmp_path):
 	s = Validator(200, ALL).parse(_form(defensefinder="1", plasmidfinder="1"))
 	argv = Command(settings, s, "a", "b").argv()
 	assert "-df" in argv and "-pf" in argv and "-sr" not in argv and "-gn" not in argv
-	s = Validator(200, ALL).parse(_form(genomad="1", sismis="1", scan_range="50000"))
+	assert "-cr" not in argv and "-dg" not in argv
+	s = Validator(200, ALL).parse(_form(genomad="1", sismis="1", scan_range="50000", rna="1", digest="1"))
 	argv = Command(settings, s, "a", "b").argv()
 	assert "-gn" in argv and "-ss" in argv and argv[argv.index("-sr") + 1] == "50000"
+	assert "-cr" in argv and "-dg" in argv and s.rna and s.digest
 	assert "scan_range" in Validator(200, ALL).parse(_form(scan_range="100")).errors
 	assert "scan_range" in Validator(200, ALL).parse(_form(scan_range="lots")).errors
 

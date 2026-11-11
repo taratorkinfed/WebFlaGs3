@@ -10,6 +10,7 @@ SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="40"><text x="
 LISTING = """core           installed  -                       mafft, trimal, VeryFastTree
 pfam           installed  38.0                    Pfam-A HMMs
 interpro       -          -                       InterPro metadata table
+mmseqs         installed  18-8cc5c                MMseqs2
 genomad        installed  1.12.0 / db 1.9         geNomad and its database
 plasmidfinder  2.1.6      -                       PlasmidFinder replicon database
 defensefinder  installed  3.0.0                   DefenseFinder
@@ -43,6 +44,8 @@ def main() -> int:
 	parser.add_argument("-pf", action="store_true")
 	parser.add_argument("-ss", action="store_true")
 	parser.add_argument("-sr", type=int)
+	parser.add_argument("-cr", action="store_true")
+	parser.add_argument("-dg", action="store_true")
 	parser.add_argument("-pdf", action="store_true")
 	args = parser.parse_args()
 	out = Path(args.o)
@@ -65,6 +68,8 @@ def main() -> int:
 			(out / "figures" / (name + ".pdf")).write_bytes(b"%PDF-1.4 fake\n")
 	(out / "report" / "run_summary.txt").write_text("queries: {}\nfigures: {}\n".format(len(lines), ", ".join(names)))
 	(out / "report" / "neighbourhoods.tsv").write_text("row_id\tgene\n")
+	if args.dg:
+		(out / "report" / "digest.md").write_text("# digest\n")
 	(out / "run.tsv").write_text("version\t3.4.0\ncommand\t" + " ".join(sys.argv) + "\n")
 	(out / "config.tsv").write_text("api_key\t{}\nuser_email\t{}\n".format(args.api, args.u))
 	(out / "console.log").write_text("key {} seen\n".format(args.api))

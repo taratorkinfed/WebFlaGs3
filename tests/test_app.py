@@ -76,11 +76,12 @@ def test_unknown_job_is_expired_page(client):
 def test_health(client):
 	data = client.get("/health").get_json()
 	assert data["status"] == "ok" and data["redis"]
-	assert data["features"] == ["tree", "domains", "defensefinder", "genomad", "plasmidfinder", "sismis"]
+	assert data["features"] == ["tree", "mmseqs", "domains", "defensefinder", "genomad", "plasmidfinder", "sismis"]
 
 
 def test_job_with_scanners(client, flask_app):
-	page = client.post("/", data={**FORM, "tree": "none", "genomad": "1", "defensefinder": "1", "padloc": "1", "scan_range": "30000"})
+	page = client.post("/", data={**FORM, "tree": "none", "genomad": "1", "defensefinder": "1", "padloc": "1", "scan_range": "30000",
+		"rna": "1", "digest": "1", "method": "mmseqs_cluster", "evalue": ""})
 	assert page.status_code == 302
 	job_id = page.headers["Location"].rsplit("/", 1)[1]
 	_work(flask_app)
@@ -88,6 +89,8 @@ def test_job_with_scanners(client, flask_app):
 	assert status["status"] == "finished"
 	assert "-df" in status["log"] and "-gn" in status["log"] and "-sr 30000" in status["log"] and "-pl" not in status["log"]
 	done = client.get("/results/" + job_id)
-	assert b"figures/all-in-one.svg" in done.data
+	assert b"figures/all-in-one.svg" in done.data and b"report/digest.md" in done.data
+	assert "-cr" in status["log"] and "-dg" in status["log"]
+	assert "-cm mmseqs_cluster" in status["log"] and " -n " not in status["log"] and "-ce" not in status["log"]
 	bad = client.post("/", data={**FORM, "genomad": "1", "scan_range": "7"})
 	assert bad.status_code == 400 and b"Must be between 5000 and 200000" in bad.data

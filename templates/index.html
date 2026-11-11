@@ -44,20 +44,34 @@
 				<div class="col-md-12">
 					<h5>Neighbourhood and clustering</h5>
 				</div>
-				<div class="col-md-4">
-					<label for="gene" class="form-label">Flanking genes on each side</label>
+				<div class="col-md-3">
+					<label for="gene" class="form-label">Flanking genes per side</label>
 					<input class="form-control{% if submission.errors.gene %} is-invalid{% endif %}" type="number" id="gene" name="gene" min="1" max="20" value="{{ submission.gene }}">
 					<div class="invalid-feedback">{{ submission.errors.gene }}</div>
 				</div>
-				<div class="col-md-4">
+				<div class="col-md-3">
+					<label for="method" class="form-label">Clustering method</label>
+					<select class="form-select{% if submission.errors.method %} is-invalid{% endif %}" id="method" name="method">
+						<option value="jackhmmer" {% if submission.method == "jackhmmer" %}selected{% endif %}>jackhmmer</option>
+						<option value="mmseqs_cluster" {% if submission.method == "mmseqs_cluster" %}selected{% endif %} {% if not capabilities.has("mmseqs") %}disabled{% endif %}>MMseqs2 (fast){% if not capabilities.has("mmseqs") %} (not available yet){% endif %}</option>
+					</select>
+					<div class="invalid-feedback">{{ submission.errors.method }}</div>
+				</div>
+				<div class="col-md-3">
 					<label for="iterations" class="form-label">jackhmmer iterations</label>
 					<input class="form-control{% if submission.errors.iterations %} is-invalid{% endif %}" type="number" id="iterations" name="iterations" min="1" max="10" value="{{ submission.iterations }}">
 					<div class="invalid-feedback">{{ submission.errors.iterations }}</div>
 				</div>
-				<div class="col-md-4">
+				<div class="col-md-3">
 					<label for="evalue" class="form-label">Clustering E-value</label>
-					<input class="form-control{% if submission.errors.evalue %} is-invalid{% endif %}" type="text" id="evalue" name="evalue" value="{{ '%g' | format(submission.evalue) }}">
+					<input class="form-control{% if submission.errors.evalue %} is-invalid{% endif %}" type="text" id="evalue" name="evalue"
+						placeholder="method's default" value="{{ '%g' | format(submission.evalue) if submission.evalue is not none else '' }}">
 					<div class="invalid-feedback">{{ submission.errors.evalue }}</div>
+				</div>
+				<div class="col-md-12">
+					<div class="form-text">MMseqs2 clusters the flanking proteins several times faster than jackhmmer and is the kind choice for long
+						lists; jackhmmer finds more distant homologues. Left empty, the E-value is the method's own default
+						(1e-10 for jackhmmer, 1e-3 for MMseqs2). Iterations apply to jackhmmer only.</div>
 				</div>
 				<div class="col-md-12">
 					<h5>Extras</h5>
@@ -84,6 +98,21 @@
 						<input class="form-check-input" type="checkbox" id="pdf" name="pdf" value="1" {% if submission.pdf %}checked{% endif %}>
 						<label class="form-check-label" for="pdf">PDF beside every figure</label>
 					</div>
+				</div>
+				<div class="col-md-4">
+					<div class="form-check form-switch">
+						<input class="form-check-input" type="checkbox" id="rna" name="rna" value="1" {% if submission.rna %}checked{% endif %}>
+						<label class="form-check-label" for="rna">Cluster flanking RNA genes too</label>
+					</div>
+					<div class="form-text">tRNA, rRNA and ncRNA genes get families like the proteins (nhmmer).</div>
+				</div>
+				<div class="col-md-8">
+					<div class="form-check form-switch">
+						<input class="form-check-input" type="checkbox" id="digest" name="digest" value="1" {% if submission.digest %}checked{% endif %}>
+						<label class="form-check-label" for="digest">Digest</label>
+					</div>
+					<div class="form-text">Adds <code>digest.md</code> to the report: the whole run as one compact text document — families, systems,
+						conserved positions and their exceptions.</div>
 				</div>
 				<div class="col-md-12">
 					<h5>Systems and mobile elements</h5>

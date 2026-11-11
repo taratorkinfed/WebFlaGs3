@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass, field
+from typing import Optional
 
 TOKEN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,59}$")
 EMAIL = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
@@ -8,6 +9,9 @@ TREE_CHOICES = ("none", "tree", "tree_order")
 GENE_RANGE = (1, 20)
 ITERATION_RANGE = (1, 10)
 EVALUE_RANGE = (1e-100, 1.0)
+JACKHMMER = "jackhmmer"
+MMSEQS = "mmseqs_cluster"
+METHODS = (JACKHMMER, MMSEQS)
 SCAN_RANGE = (5000, 200000)
 
 
@@ -33,10 +37,13 @@ SCANNERS = (
 class Submission:
 	lines: list[str] = field(default_factory=list)
 	gene: int = 4
+	method: str = JACKHMMER
 	iterations: int = 3
-	evalue: float = 1e-10
+	evalue: Optional[float] = None
 	tree: str = "none"
 	domains: bool = False
+	rna: bool = False
+	digest: bool = False
 	scanners: list[str] = field(default_factory=list)
 	scan_range: int = 20000
 	pdf: bool = True
@@ -73,14 +80,21 @@ class Validator:
 		if line_error:
 			s.errors["accessions"] = line_error
 		s.gene = self._integer(form, "gene", s.gene, GENE_RANGE, s.errors)
+		s.method = form.get("method", JACKHMMER)
+		if s.method not in METHODS:
+			s.errors["method"] = "Unknown clustering method."
+		elif s.method == MMSEQS and not self.capabilities.has("mmseqs"):
+			s.method = JACKHMMER
 		s.iterations = self._integer(form, "iterations", s.iterations, ITERATION_RANGE, s.errors)
-		s.evalue = self._float(form, "evalue", s.evalue, EVALUE_RANGE, s.errors)
+		s.evalue = self._float(form, "evalue", EVALUE_RANGE, s.errors)
 		s.tree = form.get("tree", "none")
 		if s.tree not in TREE_CHOICES:
 			s.errors["tree"] = "Unknown tree option."
 		elif not self.capabilities.has("tree"):
 			s.tree = "none"
 		s.domains = bool(form.get("domains")) and self.capabilities.has("domains")
+		s.rna = bool(form.get("rna"))
+		s.digest = bool(form.get("digest"))
 		s.scanners = [sc.name for sc in SCANNERS if form.get(sc.name) and self.capabilities.has(sc.name)]
 		s.scan_range = self._integer(form, "scan_range", s.scan_range, SCAN_RANGE, s.errors)
 		s.pdf = bool(form.get("pdf"))
@@ -126,12 +140,15 @@ class Validator:
 		return value
 
 	@staticmethod
-	def _float(form, key, default, bounds, errors) -> float:
+	def _float(form, key, bounds, errors) -> Optional[float]:
+		text = (form.get(key) or "").strip()
+		if not text:
+			return None
 		try:
-			value = float(form.get(key, default))
-		except (TypeError, ValueError):
-			errors[key] = "Must be a number such as 1e-10."
-			return default
+			value = float(text)
+		except ValueError:
+			errors[key] = "Must be a number such as 1e-10, or empty for the method's default."
+			return None
 		if not bounds[0] <= value <= bounds[1]:
 			errors[key] = "Must be between {:g} and {:g}.".format(*bounds)
 		return value
@@ -151,8 +168,11 @@ class Command:
 	def argv(self) -> list[str]:
 		s, sub = self.settings, self.submission
 		argv = [s.flags3_bin, "run", "-i", self.list_path, "-o", self.run_dir, "-nt",
-			"-u", sub.email, "-g", str(sub.gene), "-n", str(sub.iterations), "-ce", "{:g}".format(sub.evalue),
-			"-c", str(s.cpu_per_job), "-cm", "jackhmmer"]
+			"-u", sub.email, "-g", str(sub.gene), "-c", str(s.cpu_per_job), "-cm", sub.method]
+		if sub.method == JACKHMMER:
+			argv += ["-n", str(sub.iterations)]
+		if sub.evalue is not None:
+			argv += ["-ce", "{:g}".format(sub.evalue)]
 		if s.ncbi_api_key:
 			argv += ["-api", s.ncbi_api_key]
 		if sub.tree == "tree":
@@ -161,6 +181,10 @@ class Command:
 			argv.append("-to")
 		if sub.domains:
 			argv.append("-d")
+		if sub.rna:
+			argv.append("-cr")
+		if sub.digest:
+			argv.append("-dg")
 		chosen = [sc for sc in SCANNERS if sc.name in sub.scanners]
 		argv += [sc.flag for sc in chosen]
 		if any(sc.windowed for sc in chosen):

@@ -3,6 +3,7 @@ import subprocess
 
 FEATURES = {
 	"tree": ("core",),
+	"mmseqs": ("mmseqs",),
 	"domains": ("pfam",),
 	"defensefinder": ("defensefinder",),
 	"padloc": ("padloc",),

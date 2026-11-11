@@ -16,7 +16,18 @@ Five Python files, five templates, no database beyond Redis.
   side by default, 5 000–200 000) is passed only when a windowed scanner —
   geNomad or Sismis — is selected; PlasmidFinder keeps its own
   whole-contig span from the tools table and the defence tools read the
-  flanking proteins, so neither is affected by it.
+  flanking proteins, so neither is affected by it. The clustering
+  method is a choice between `jackhmmer` and `mmseqs_cluster` (`-cm`),
+  the second offered when the `mmseqs` component is installed: it is the
+  cheap way to cluster and the form says so, because long lists on
+  jackhmmer are what loads the server. `-n` is passed only with jackhmmer,
+  and `-ce` only when the E-value box is filled, so an empty box leaves each
+  method its own default from FlaGs3's tools table (1e-10 and 1e-3) rather
+  than forcing one method's number on the other. RNA clustering (`-cr`)
+  and the digest (`-dg`) are plain switches: both come with FlaGs3 itself
+  and need no installed component. `report/digest.md` reaches the user as
+  one of the report-file buttons on the results page, like every other
+  file FlaGs3 writes there.
 - `capabilities.py` — `Capabilities`, what this server's FlaGs3 can do.
   At start-up the app runs `flags3 install` with no arguments, which lists
   every component with its state, and keeps the names whose state is not
