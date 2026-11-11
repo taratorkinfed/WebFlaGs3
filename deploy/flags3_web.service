@@ -1,0 +1,17 @@
+[Unit]
+Description=uWSGI instance serving flags3_web
+After=network.target
+
+[Service]
+User=fe5657ta
+Group=www-data
+WorkingDirectory=/home/webapp/flags3_web
+Environment="PATH=/home/webapp/flags3_web/venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="LANG=en_US.UTF-8"
+Environment="LC_ALL=en_US.UTF-8"
+ExecStart=/home/webapp/flags3_web/venv/bin/uwsgi --ini flags3_web.ini
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

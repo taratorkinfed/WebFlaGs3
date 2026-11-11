@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Not found{% endblock %}
+{% block content %}
+<div class="container" style="height: 70vh;">
+	<div class="row align-items-center h-100 justify-content-center text-center">
+		<div class="col-md-7">
+			<h1 class="display-6">Nothing at this address</h1>
+			<a class="btn btn-outline-primary" href="{{ url_for('index') }}">Back to FlaGs3</a>
+		</div>
+	</div>
+</div>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}{{ settings.site_name }} results{% endblock %}
+{% block content %}
+<div class="container-md">
+	<p></p>
+	<div class="row justify-content-center">
+		<div class="col-lg-10 no-background shadow">
+			<p></p>
+			<div class="row">
+				<div class="col-12">
+					<h2>Status</h2>
+				</div>
+				{% if status.status == "queued" %}
+					<div class="col-12">
+						<p class="fs-5">Your job is queued.</p>
+						<p class="fs-5">
+							<span class="fw-medium">Job id:</span> {{ job_id }}<br>
+							<span class="fw-medium">Run name:</span> {{ submission.run_name }}<br>
+							<span class="fw-medium">Position in the queue:</span> <span id="queue-position">{{ status.position }}</span><br>
+							<span class="fw-medium">Queued at:</span> {{ status.stamp("enqueued_at") }}</p>
+					</div>
+				{% elif status.status == "started" %}
+					<div class="col-12">
+						<p class="fs-5">Your job is running.</p>
+						<p class="fs-5">
+							<span class="fw-medium">Job id:</span> {{ job_id }}<br>
+							<span class="fw-medium">Run name:</span> {{ submission.run_name }}<br>
+							<span class="fw-medium">Queued at:</span> {{ status.stamp("enqueued_at") }}<br>
+							<span class="fw-medium">Started at:</span> {{ status.stamp("started_at") }}</p>
+					</div>
+				{% elif status.status == "finished" %}
+					<div class="col-12">
+						<p class="fs-5">Your job is finished.</p>
+						<p class="fs-5">
+							<span class="fw-medium">Job id:</span> {{ job_id }}<br>
+							<span class="fw-medium">Run name:</span> {{ submission.run_name }}<br>
+							<span class="fw-medium">Started at:</span> {{ status.stamp("started_at") }}<br>
+							<span class="fw-medium">Finished at:</span> {{ status.stamp("ended_at") }}</p>
+						<p class="fs-5">This page stays available until <span class="fst-italic">{{ status.stored_until }}</span>.
+							Bookmark it; there is no email.</p>
+					</div>
+				{% else %}
+					<div class="col-12">
+						<p class="fs-5"><span class="fw-medium">Run name:</span> {{ submission.run_name }}</p>
+						<p class="fs-5">The job did not finish ({{ status.status }}). The log below says how far it got; the usual
+							causes are an input no database can resolve and an NCBI outage.</p>
+						<p class="fs-5 fw-light">Resubmit with the problem lines removed, or contact us with the job id
+							<code>{{ job_id }}</code> — the run directory is kept for a while.</p>
+					</div>
+				{% endif %}
+				{% if status.status == "finished" %}
+					<hr>
+					<div class="col-12">
+						<h2>Figures</h2>
+					</div>
+					{% if figures %}
+						{% for name in figures %}
+							<div class="col-12">
+								<p class="fs-5 fw-medium">{{ name[:-4] }}
+									<small class="fw-light">
+										<a href="{{ url_for('served', job_id=job_id, filepath='figures/' + name) }}" target="_blank">open SVG</a>
+										{% if name[:-4] + '.pdf' in pdfs %}· <a href="{{ url_for('served', job_id=job_id, filepath='figures/' + name[:-4] + '.pdf') }}" target="_blank">PDF</a>{% endif %}
+									</small></p>
+								<div class="figure-box border rounded p-2 bg-white">
+									<img src="{{ url_for('served', job_id=job_id, filepath='figures/' + name) }}" alt="{{ name }}">
+								</div>
+								<p></p>
+							</div>
+						{% endfor %}
+					{% else %}
+						<div class="col-12"><p class="fs-5 fw-light">No figure was drawn; the summary below says why.</p></div>
+					{% endif %}
+					<hr>
+					<div class="col-12">
+						<h2>Summary</h2>
+					</div>
+					<div class="col-12">
+						<div class="p-3 border bg-body-tertiary rounded">
+							<pre class="log-box font-monospace text-muted fw-light">{{ summary or "No summary was written." }}</pre>
+						</div>
+						<p></p>
+					</div>
+					<hr>
+					<div class="col-12">
+						<h2>Download</h2>
+					</div>
+					<div class="col-12">
+						<a class="btn btn-outline-primary" href="{{ url_for('download', job_id=job_id) }}">ZIP archive of the whole run</a>
+						{% for name in job_dir.report_files() %}
+							<a class="btn btn-outline-secondary btn-sm" href="{{ url_for('served', job_id=job_id, filepath='report/' + name) }}">{{ name }}</a>
+						{% endfor %}
+					</div>
+					<p></p>
+				{% endif %}
+				{% if status.status != "queued" %}
+					<hr>
+					<div class="col-12">
+						<h2>Log</h2>
+					</div>
+					<div class="col-12">
+						<div class="p-3 border bg-body-tertiary rounded">
+							<pre class="log-box font-monospace text-muted fw-light" id="log">{{ status.meta.get("log", "") }}</pre>
+						</div>
+					</div>
+					<p></p>
+				{% endif %}
+				{% if not status.final %}
+					<hr>
+					<div class="col-auto">
+						<p class="fs-5 fw-light">This page reloads by itself when the job changes state.</p>
+					</div>
+					<div class="col-auto">
+						<div class="spinner-flags3"></div>
+					</div>
+					<p></p>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+	<p></p>
+</div>
+{% endblock %}
+{% block scripts %}
+{% if not status.final %}
+<script>
+	const statusUrl = "{{ url_for('status', job_id=job_id) }}";
+	const startStatus = "{{ status.status }}";
+	setInterval(function () {
+		fetch(statusUrl).then(r => r.json()).then(function (s) {
+			if (s.status !== startStatus) {
+				location.reload();
+				return;
+			}
+			const log = document.getElementById("log");
+			if (log && log.textContent !== s.log) {
+				log.textContent = s.log;
+				log.scrollTop = log.scrollHeight;
+			}
+			const position = document.getElementById("queue-position");
+			if (position) {
+				position.textContent = s.position;
+			}
+		}).catch(function () {});
+	}, 2000);
+</script>
+{% endif %}
+{% endblock %}

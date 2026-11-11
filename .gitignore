@@ -1,0 +1,8 @@
+.env
+venv/
+jobs/
+*.sock
+__pycache__/
+*.pyc
+uwsgi.log
+.pytest_cache/

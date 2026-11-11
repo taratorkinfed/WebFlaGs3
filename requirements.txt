@@ -1,0 +1,5 @@
+flask>=3.0
+redis>=5.0
+rq>=1.16
+python-dotenv>=1.0
+uwsgi>=2.0

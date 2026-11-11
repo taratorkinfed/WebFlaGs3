@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Job not found{% endblock %}
+{% block content %}
+<div class="container" style="height: 70vh;">
+	<div class="row align-items-center h-100 justify-content-center text-center">
+		<div class="col-md-7">
+			<h1 class="display-6">This job is not here any more</h1>
+			<p class="fs-5 text-muted">Results are kept for {{ settings.retention }} after a job finishes, and the
+				link only ever worked for the job id that was in it.</p>
+			<a class="btn btn-outline-primary" href="{{ url_for('index') }}">Submit a new job</a>
+		</div>
+	</div>
+</div>
+{% endblock %}

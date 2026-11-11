@@ -1,0 +1,9 @@
+[Unit]
+Description=Prune the FlaGs3 genome cache of genomes unused for 30 days
+
+[Service]
+Type=oneshot
+User=fe5657ta
+Group=www-data
+Environment="FLAGS3_HOME=/var/www/flags3/home"
+ExecStart=/var/www/flags3/venv/bin/flags3 cache /var/www/flags3/home/genomes --prune 30

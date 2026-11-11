@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+	<p></p>
+	<div class="row justify-content-center">
+		<div class="col-lg-10 no-background shadow">
+			<div class="row g-3">
+				<div class="col-md-12">
+					<p></p>
+					<h3>FlaGs3</h3>
+					<p class="fs-6 fw-semibold">Conserved gene neighbourhoods around your proteins of interest.</p>
+					<p class="fs-6">Give FlaGs3 a list of protein accessions. For each one it fetches the genome, cuts out the
+						flanking genes, clusters all flanking proteins into homologous families with jackhmmer, and draws the
+						neighbourhoods side by side with families in matching colours, so that conserved gene context stands out.
+						Optionally it builds a phylogenetic tree of the query proteins and annotates Pfam domains on every
+						flanking protein. Results stay on the server for {{ settings.retention }} and can be
+						downloaded as one archive.</p>
+					<p class="fs-6">This is the FlaGs3 web service; the command-line tool with all its options is on
+						<a href="https://github.com/GCA-VH-lab/FlaGs3">GitHub</a>. The previous version runs as
+						<a href="{{ settings.lab_url }}/webflags">webFlaGs</a>.</p>
+				</div>
+			</div>
+			<hr>
+			<form class="row gy-3 gx-4" method="post" enctype="multipart/form-data" action="{{ url_for('index') }}" novalidate>
+				<div class="col-md-12">
+					<h5>Query proteins</h5>
+					<p>One query per line: a protein accession, or a protein accession and its assembly separated by whitespace.
+						Up to {{ settings.max_lines }} queries per job.
+						<a href="{{ url_for('index', demo=1) }}">Load the demo list</a>.</p>
+				</div>
+				<div class="col-md-7">
+					<label for="accessions" class="form-label">Accession list</label>
+					<textarea class="form-control font-monospace{% if submission.errors.accessions %} is-invalid{% endif %}" id="accessions" name="accessions"
+						rows="{{ [submission.lines | length + 1, 6] | max if submission.lines else 6 }}" spellcheck="false"
+						placeholder="WP_011108232.1&#10;WP_012345678.1	GCF_000005845.2&#10;AAC73113.1	U00096">{{ submission.list_text }}</textarea>
+					<div class="invalid-feedback">{{ submission.errors.accessions | safe }}</div>
+				</div>
+				<div class="col-md-5">
+					<label for="list_file" class="form-label">… or upload the list as a text file</label>
+					<input class="form-control" type="file" id="list_file" name="list_file" accept=".txt,.tsv,text/plain">
+					<div class="form-text">The file replaces the text box when both are given.</div>
+				</div>
+				<div class="col-md-12">
+					<h5>Neighbourhood and clustering</h5>
+				</div>
+				<div class="col-md-4">
+					<label for="gene" class="form-label">Flanking genes on each side</label>
+					<input class="form-control{% if submission.errors.gene %} is-invalid{% endif %}" type="number" id="gene" name="gene" min="1" max="20" value="{{ submission.gene }}">
+					<div class="invalid-feedback">{{ submission.errors.gene }}</div>
+				</div>
+				<div class="col-md-4">
+					<label for="iterations" class="form-label">jackhmmer iterations</label>
+					<input class="form-control{% if submission.errors.iterations %} is-invalid{% endif %}" type="number" id="iterations" name="iterations" min="1" max="10" value="{{ submission.iterations }}">
+					<div class="invalid-feedback">{{ submission.errors.iterations }}</div>
+				</div>
+				<div class="col-md-4">
+					<label for="evalue" class="form-label">Clustering E-value</label>
+					<input class="form-control{% if submission.errors.evalue %} is-invalid{% endif %}" type="text" id="evalue" name="evalue" value="{{ '%g' | format(submission.evalue) }}">
+					<div class="invalid-feedback">{{ submission.errors.evalue }}</div>
+				</div>
+				<div class="col-md-12">
+					<h5>Extras</h5>
+				</div>
+				<div class="col-md-4">
+					<label for="tree" class="form-label">Phylogenetic tree of the queries</label>
+					<select class="form-select" id="tree" name="tree">
+						<option value="none" {% if submission.tree == "none" %}selected{% endif %}>No tree</option>
+						<option value="tree" {% if submission.tree == "tree" %}selected{% endif %}>Tree, rows in input order</option>
+						<option value="tree_order" {% if submission.tree == "tree_order" %}selected{% endif %}>Tree, rows in tree order</option>
+					</select>
+					<div class="form-text">mafft, trimAl and VeryFastTree; adds minutes for large lists.</div>
+				</div>
+				<div class="col-md-4">
+					<div class="form-check form-switch mt-md-4 pt-md-2">
+						<input class="form-check-input" type="checkbox" id="domains" name="domains" value="1"
+							{% if submission.domains %}checked{% endif %} {% if not settings.domains_available %}disabled{% endif %}>
+						<label class="form-check-label" for="domains">Pfam domains on flanking proteins</label>
+					</div>
+					{% if not settings.domains_available %}<div class="form-text">Not available on this server yet.</div>{% endif %}
+				</div>
+				<div class="col-md-4">
+					<div class="form-check form-switch mt-md-4 pt-md-2">
+						<input class="form-check-input" type="checkbox" id="pdf" name="pdf" value="1" {% if submission.pdf %}checked{% endif %}>
+						<label class="form-check-label" for="pdf">PDF beside every figure</label>
+					</div>
+				</div>
+				<div class="col-md-12">
+					<h5>Run</h5>
+				</div>
+				<div class="col-md-6">
+					<label for="email" class="form-label required">Email</label>
+					<input class="form-control{% if submission.errors.email %} is-invalid{% endif %}" type="email" id="email" name="email" value="{{ submission.email }}" required>
+					<div class="invalid-feedback">{{ submission.errors.email }}</div>
+					<div class="form-text">Passed to NCBI with every request, as their Entrez service requires. Nothing is sent to it.</div>
+				</div>
+				<div class="col-md-6">
+					<label for="run_name" class="form-label">Run name</label>
+					<input class="form-control{% if submission.errors.run_name %} is-invalid{% endif %}" type="text" id="run_name" name="run_name" value="{{ submission.run_name }}" maxlength="40">
+					<div class="invalid-feedback">{{ submission.errors.run_name }}</div>
+					<div class="form-text">Names the result archive.</div>
+				</div>
+				<div class="col-12">
+					<button class="btn btn-outline-primary" id="submit_button" type="submit">Submit</button>
+				</div>
+			</form>
+			<hr id="input">
+			<div class="row g-3">
+				<div class="col-md-12">
+					<h5>Input format</h5>
+					<p class="fs-6">Each line is one query. A bare accession is looked up at NCBI, which finds the genome it
+						comes from; a pair <code>PROTEIN&lt;tab&gt;ASSEMBLY</code> names the genome directly and skips the lookup.
+						Lines starting with <code>#</code> are ignored. Three kinds of genome are understood:</p>
+					<ul class="fs-6">
+						<li><b>NCBI</b>: RefSeq or GenBank proteins (<code>WP_…</code>, <code>NP_…</code>, <code>YP_…</code>,
+							<code>AAC…</code>) and assemblies (<code>GCF_…</code>, <code>GCA_…</code>). A bare accession is enough.</li>
+						<li><b>ENA</b>: the protein as it is named in the ENA record, paired with a sequence accession
+							(<code>U00096</code>, <code>CP003200.1</code>) or a WGS set (<code>CABHOY01</code>). Always a pair.</li>
+						<li><b>MGnify</b>: a MAG locus tag paired with its catalogue accession
+							(<code>MGYG000454827_00001&lt;tab&gt;MGYG000454827</code>). Always a pair.</li>
+					</ul>
+					<p class="fs-6">Queries that cannot be resolved or whose genome cannot be fetched are listed in the run summary
+						and the job still completes for the rest.</p>
+				</div>
+			</div>
+			<p></p>
+		</div>
+	</div>
+	<p></p>
+</div>
+{% endblock %}

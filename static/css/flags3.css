@@ -1,0 +1,37 @@
+body.flags3 {
+	background-image: url("/static/img/background_webflags.svg");
+	background-repeat: repeat;
+	background-size: 100%;
+	background-attachment: fixed;
+}
+body.flags3 a:hover {
+	color: #C24765;
+}
+.log-box {
+	max-height: 24rem;
+	overflow-y: auto;
+	white-space: pre-wrap;
+	font-size: 0.85rem;
+	margin: 0;
+}
+.figure-box {
+	overflow-x: auto;
+}
+.figure-box img {
+	max-width: 100%;
+	height: auto;
+}
+.spinner-flags3 {
+	width: 35px;
+	height: 35px;
+	border-radius: 50%;
+	border: 5px solid;
+	border-color: rgba(30, 147, 178, 0.9);
+	border-right-color: rgba(194, 71, 101, 0.8);
+	animation: spinner-d3wgkg 1s infinite linear;
+}
+@media (prefers-reduced-motion: reduce) {
+	.spinner-flags3 {
+		animation: none;
+	}
+}

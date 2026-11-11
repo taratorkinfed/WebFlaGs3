@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>{% block title %}{{ settings.site_name }}{% endblock %}</title>
+	<link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+	<link href="{{ url_for('static', filename='css/flags3.css') }}" rel="stylesheet">
+	<link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+	<meta name="description" content="FlaGs3: conserved gene neighbourhoods around your proteins of interest, from the Atkinson lab.">
+	{% block head %}{% endblock %}
+</head>
+<body class="flags3">
+<nav class="navbar sticky-top navbar-expand-lg navbar-dark" data-bs-theme="dark" id="topnavbar">
+	<div class="container-fluid">
+		<a class="navbar-brand" href="{{ url_for('index') }}">
+			<span class="fw-semibold tal">FlaGs3</span> <span class="fw-medium text-muted">| The Atkinson lab</span>
+		</a>
+		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_area"
+				aria-controls="collapse_area" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="collapse navbar-collapse" id="collapse_area">
+			<ul class="navbar-nav me-auto"></ul>
+			<ul class="navbar-nav ml-auto">
+				<li class="nav-item"><a class="nav-link fw-medium" href="{{ url_for('index') }}">Submit</a></li>
+				<li class="nav-item"><a class="nav-link fw-medium" href="{{ url_for('index') }}#input">Input format</a></li>
+				<li class="nav-item"><a class="nav-link fw-medium" href="{{ settings.lab_url }}/webflags">webFlaGs</a></li>
+				<li class="nav-item"><a class="nav-link fw-medium" href="{{ settings.lab_url }}">Lab server</a></li>
+				<li class="nav-item"><a class="nav-link fw-medium" href="https://github.com/GCA-VH-lab/FlaGs3">GitHub</a></li>
+			</ul>
+		</div>
+	</div>
+</nav>
+{% block content %}{% endblock %}
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
