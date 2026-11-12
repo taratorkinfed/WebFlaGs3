@@ -26,6 +26,11 @@ def test_form_page_and_demo(client):
 	assert b"WP_028660106.1" in demo.data and b"WP_028275955.1" in demo.data
 
 
+def test_form_says_non_coding_rna(client):
+	page = client.get("/")
+	assert b"non-coding RNA" in page.data and b"RNA genes" not in page.data
+
+
 def test_invalid_submission_rerenders_with_errors(client):
 	page = client.post("/", data={**FORM, "email": "nope", "accessions": "bad line here"})
 	assert page.status_code == 400 and b"is-invalid" in page.data and b"<b>bad line here</b>" in page.data
