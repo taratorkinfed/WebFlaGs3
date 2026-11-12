@@ -23,7 +23,7 @@ def test_form_page_and_demo(client):
 	assert "disabled" in padloc and "disabled" not in genomad
 	assert client.head("/").status_code == 200
 	demo = client.get("/?demo=1")
-	assert b"WP_028660106.1" in demo.data and b"WP_028275955.1" in demo.data
+	assert b"WP_053886483.1" in demo.data and b"WP_040110778.1" in demo.data
 
 
 def test_form_says_non_coding_rna(client):
