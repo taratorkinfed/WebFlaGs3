@@ -24,6 +24,9 @@ def main() -> int:
 	if sys.argv[1:2] == ["install"]:
 		print(LISTING, end="")
 		return 0
+	if sys.argv[1:2] == ["--version"]:
+		print("FlaGs3 3.6.0")
+		return 0
 	parser = argparse.ArgumentParser()
 	parser.add_argument("command")
 	parser.add_argument("-i", action="append", default=[])
@@ -48,6 +51,7 @@ def main() -> int:
 	parser.add_argument("-cr", action="store_true")
 	parser.add_argument("-dg", action="store_true")
 	parser.add_argument("-pdf", action="store_true")
+	parser.add_argument("-pcl", action="store_true")
 	args = parser.parse_args()
 	out = Path(args.o)
 	lines = [l for l in Path(args.i[0]).read_text().splitlines() if l.strip()]

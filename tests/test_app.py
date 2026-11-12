@@ -70,6 +70,13 @@ def test_failed_job_page(client, flask_app):
 	assert client.get("/download/" + job_id).status_code == 404
 
 
+def test_clusters_legend_switch(client, flask_app):
+	assert b'id="clusters_legend" name="clusters_legend" value="1"' in client.get("/").data
+	job_id = client.post("/", data={**FORM, "tree": "none", "clusters_legend": "1"}).headers["Location"].rsplit("/", 1)[1]
+	_work(flask_app)
+	assert "-pcl" in client.get("/status/" + job_id).get_json()["log"]
+
+
 def test_unknown_job_is_expired_page(client):
 	page = client.get("/results/" + "0" * 32)
 	assert page.status_code == 404 and b"not here any more" in page.data
@@ -81,7 +88,8 @@ def test_unknown_job_is_expired_page(client):
 def test_health(client):
 	data = client.get("/health").get_json()
 	assert data["status"] == "ok" and data["redis"]
-	assert data["features"] == ["tree", "mmseqs", "domains", "defensefinder", "genomad", "plasmidfinder", "sismis"]
+	assert data["features"] == ["tree", "mmseqs", "domains", "defensefinder", "genomad", "plasmidfinder", "sismis", "clusters_legend"]
+	assert data["flags3"] == "3.6.0"
 	assert data["mail"] is True
 
 

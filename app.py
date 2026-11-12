@@ -151,7 +151,7 @@ def download(job_id: str):
 @app.route("/health")
 def health():
 	return flask.jsonify({"status": "ok", "redis": bool(redis_connection.ping()), "queued": len(queue),
-		"features": capabilities.features, "mail": mail_enabled})
+		"features": capabilities.features, "flags3": capabilities.version_text, "mail": mail_enabled})
 
 
 @app.errorhandler(404)

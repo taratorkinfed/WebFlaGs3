@@ -46,6 +46,7 @@ class Submission:
 	digest: bool = False
 	scanners: list[str] = field(default_factory=list)
 	scan_range: int = 20000
+	clusters_legend: bool = False
 	pdf: bool = True
 	notify: bool = True
 	email: str = ""
@@ -98,6 +99,7 @@ class Validator:
 		s.digest = bool(form.get("digest"))
 		s.scanners = [sc.name for sc in SCANNERS if form.get(sc.name) and self.capabilities.has(sc.name)]
 		s.scan_range = self._integer(form, "scan_range", s.scan_range, SCAN_RANGE, s.errors)
+		s.clusters_legend = bool(form.get("clusters_legend")) and self.capabilities.has("clusters_legend")
 		s.pdf = bool(form.get("pdf"))
 		s.notify = bool(form.get("notify"))
 		s.email = form.get("email", "").strip()
@@ -189,6 +191,8 @@ class Command:
 		argv += [sc.flag for sc in chosen]
 		if any(sc.windowed for sc in chosen):
 			argv += ["-sr", str(sub.scan_range)]
+		if sub.clusters_legend:
+			argv.append("-pcl")
 		if sub.pdf:
 			argv.append("-pdf")
 		return argv

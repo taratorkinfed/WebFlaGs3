@@ -42,6 +42,12 @@ Six Python files, five templates, no database beyond Redis.
   ambiguity is inherited from that listing: a PlasmidFinder database
   without its `commit.txt` stamp reports `-` and reads as absent; one
   installed by `flags3 install plasmidfinder` always has the stamp.
+  A feature can also depend on the FlaGs3 version instead of a component:
+  `SINCE` maps it to the first version that has it, and the probe reads
+  `flags3 --version` beside the listing. The protein clusters legend
+  (`-pcl`, FlaGs3 3.6.0) is the first such feature, so its switch is
+  disabled on a server whose FlaGs3 is older rather than failing the job on
+  an unknown option.
 - `jobs.py` — `JobDir` (the layout of one job's directory), `Runner` (worker
   side: run the subprocess, stream its output into RQ meta, scrub, archive),
   `Sweeper` (delete expired job directories), `run_job` (the RQ entry point).

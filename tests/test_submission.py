@@ -73,6 +73,16 @@ def test_clustering_method_and_defaults(tmp_path):
 	assert s.accepted and s.method == "jackhmmer"
 
 
+def test_clusters_legend_needs_flags3_3_6(tmp_path):
+	settings = Settings({"flags3_bin": "/opt/flags3", "flags3_home": str(tmp_path)})
+	new = Validator(200, Capabilities(set(), (3, 6, 0))).parse(_form(clusters_legend="1"))
+	assert new.clusters_legend and "-pcl" in Command(settings, new, "a", "b").argv()
+	old = Validator(200, Capabilities(set(), (3, 5, 0))).parse(_form(clusters_legend="1"))
+	assert old.accepted and not old.clusters_legend and "-pcl" not in Command(settings, old, "a", "b").argv()
+	assert Capabilities.parse("", "FlaGs3 3.10.2\n").version == (3, 10, 2) and Capabilities.parse("", "garbage").version == (0, 0, 0)
+	assert Capabilities.parse("", "FlaGs3 3.6.0").features == ["clusters_legend"]
+
+
 def test_capabilities_parse_the_install_listing():
 	listing = "core           installed  -      tools\npfam           -          -      Pfam\nsismis         on PATH    -      Sismis\n" \
 		"plasmidfinder  2.1.6      -      db\nsignalp        installed  6.0    licensed\n\nversions recorded in /x/versions.tsv\n"

@@ -106,13 +106,20 @@
 					</div>
 					<div class="form-text">tRNA, rRNA and other non-coding RNA get families like the proteins (nhmmer).</div>
 				</div>
-				<div class="col-md-8">
+				<div class="col-md-4">
+					<div class="form-check form-switch">
+						<input class="form-check-input" type="checkbox" id="clusters_legend" name="clusters_legend" value="1"
+							{% if submission.clusters_legend %}checked{% endif %} {% if not capabilities.has("clusters_legend") %}disabled{% endif %}>
+						<label class="form-check-label" for="clusters_legend">Protein clusters legend in the figures</label>
+					</div>
+					<div class="form-text">{% if capabilities.has("clusters_legend") %}Every family's product names under the neighbors and all-in-one figures.{% else %}Not available on this server yet.{% endif %}</div>
+				</div>
+				<div class="col-md-4">
 					<div class="form-check form-switch">
 						<input class="form-check-input" type="checkbox" id="digest" name="digest" value="1" {% if submission.digest %}checked{% endif %}>
 						<label class="form-check-label" for="digest">Digest</label>
 					</div>
-					<div class="form-text">Adds <code>digest.md</code> to the report: the whole run as one compact text document — families, systems,
-						conserved positions and their exceptions.</div>
+					<div class="form-text">Adds <code>digest.md</code> to the report: the whole run as one compact text document.</div>
 				</div>
 				<div class="col-md-12">
 					<h5>Systems and mobile elements</h5>
