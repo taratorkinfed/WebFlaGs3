@@ -171,6 +171,16 @@ page is the lab's Bootstrap build with the lab's palette and navbar.
 `static/css/flags3.css` holds the few additions (body background, log box,
 spinner). Refresh the copies when the lab stylesheet changes.
 
+The "Example output" block on the main page is `examples.py`: one
+`Example` per figure (file name, tab title, caption) and the intro line,
+rendered as Bootstrap pills with one pane each. The SVGs in
+`static/img/examples/` are FlaGs3's own figures for the demo list, so the
+captions describe exactly what the demo job returns; when the demo list or
+FlaGs3's drawing changes, rerun the demo and replace the seven files and
+whatever the captions say about them. Tabs rather than the lab pages'
+carousel because a carousel's arrows lie over the left and right edge of a
+wide figure, which is where the row labels and the system codes are.
+
 ## Not in v1
 
 A prioritised queue, a job list page, and three FlaGs3 features left out

@@ -10,6 +10,7 @@ from rq.exceptions import NoSuchJobError
 
 from capabilities import Capabilities
 from config import Settings
+from examples import EXAMPLES, INTRO
 from jobs import JobDir, run_job
 from mailer import Mailer
 from submission import SCANNERS, Submission, Validator
@@ -62,7 +63,7 @@ class JobStatus:
 
 def _page(template: str, **context):
 	return flask.render_template(template, settings=settings, capabilities=capabilities, scanners=SCANNERS,
-		mail_enabled=mail_enabled, **context)
+		mail_enabled=mail_enabled, examples=EXAMPLES, examples_intro=INTRO, **context)
 
 
 def _fetch(job_id: str):

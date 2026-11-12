@@ -143,3 +143,12 @@ def test_no_email_when_unticked_and_job_survives_smtp_failure(client, flask_app,
 	job_id = client.post("/", data={**FORM, "notify": "1"}).headers["Location"].rsplit("/", 1)[1]
 	_work(flask_app)
 	assert client.get("/status/" + job_id).get_json()["status"] == "finished" and smtp.sent == []
+
+
+def test_example_output_section(client):
+	page = client.get("/")
+	assert page.data.count(b'class="tab-pane') == 7 and b"img/examples/all-in-one.svg" in page.data
+	assert b"img/examples/sismis.svg" not in page.data and b"Example output" in page.data
+	for name in ("neighbors", "tree", "domains", "defence", "genomad", "all-in-one", "classic"):
+		svg = client.get("/static/img/examples/{}.svg".format(name))
+		assert svg.status_code == 200 and svg.mimetype == "image/svg+xml", name

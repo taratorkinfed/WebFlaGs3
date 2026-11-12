@@ -9,6 +9,32 @@
 					<p></p>
 					<h3>FlaGs3</h3>
 					<p class="fs-6 fw-semibold">Conserved gene neighbourhoods around your proteins of interest.</p>
+					<h5>Example output</h5>
+					<p class="fs-6">{{ examples_intro }}</p>
+					<ul class="nav nav-pills example-tabs" role="tablist">
+						{% for example in examples %}
+						<li class="nav-item" role="presentation">
+							<button class="nav-link{% if loop.first %} active{% endif %}" id="example-tab-{{ example.name }}" data-bs-toggle="pill"
+								data-bs-target="#example-{{ example.name }}" type="button" role="tab" aria-controls="example-{{ example.name }}"
+								aria-selected="{{ 'true' if loop.first else 'false' }}">{{ example.title }}</button>
+						</li>
+						{% endfor %}
+					</ul>
+					<div class="tab-content">
+						{% for example in examples %}
+						<div class="tab-pane fade{% if loop.first %} show active{% endif %}" id="example-{{ example.name }}" role="tabpanel"
+							aria-labelledby="example-tab-{{ example.name }}" tabindex="0">
+							<a href="{{ url_for('static', filename=example.image) }}" target="_blank" title="Open the figure at full size">
+								<div class="figure-box border rounded p-2 bg-white">
+									<img src="{{ url_for('static', filename=example.image) }}" alt="FlaGs3 {{ example.title }} figure of the demo list"
+										{% if not loop.first %}loading="lazy"{% endif %}>
+								</div>
+							</a>
+							<p class="fs-6 example-caption">{{ example.caption }}</p>
+						</div>
+						{% endfor %}
+					</div>
+					<hr>
 					<p class="fs-6">Give FlaGs3 a list of protein accessions. For each one it fetches the genome, cuts out the
 						flanking genes, clusters all flanking proteins into homologous families with jackhmmer, and draws the
 						neighbourhoods side by side with families in matching colours, so that conserved gene context stands out.

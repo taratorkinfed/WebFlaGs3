@@ -21,6 +21,16 @@ body.flags3 a:hover {
 	max-width: 100%;
 	height: auto;
 }
+.example-tabs {
+	gap: 0.25rem;
+	margin-bottom: 0.75rem;
+}
+.example-tabs .nav-link {
+	padding: 0.25rem 0.75rem;
+}
+.example-caption {
+	margin-top: 0.75rem;
+}
 .spinner-flags3 {
 	width: 35px;
 	height: 35px;
