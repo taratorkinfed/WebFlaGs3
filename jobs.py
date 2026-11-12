@@ -13,7 +13,7 @@ from submission import Command, Submission
 
 LOG_LIMIT = 200_000
 SAVE_INTERVAL = 0.5
-SCRUBBED_FILES = ("run.tsv", "config.tsv", "console.log")
+SCRUBBED_FILES = ("run.tsv", "config.tsv", "console.log", "report/run_summary.txt", "report/digest.md")
 
 
 class JobDir:

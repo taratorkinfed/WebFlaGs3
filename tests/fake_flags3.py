@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import os
 import sys
 import time
 from pathlib import Path
@@ -50,7 +51,10 @@ def main() -> int:
 	args = parser.parse_args()
 	out = Path(args.o)
 	lines = [l for l in Path(args.i[0]).read_text().splitlines() if l.strip()]
-	print("argv: " + " ".join(sys.argv[1:]), flush=True)
+	command = " ".join(sys.argv[1:])
+	key = args.api or os.environ.get("NCBI_API_KEY", "")
+	print("argv: " + command, flush=True)
+	print("ncbi key: {}".format("command line" if args.api else ("environment" if key else "none")), flush=True)
 	for stage in ("fetch", "extract", "cluster", "figures", "report"):
 		print(">> " + stage, flush=True)
 		print("progress 1/3\rprogress 2/3\rprogress 3/3", flush=True)
@@ -66,13 +70,14 @@ def main() -> int:
 		(out / "figures" / (name + ".svg")).write_text(SVG.format(name))
 		if args.pdf:
 			(out / "figures" / (name + ".pdf")).write_bytes(b"%PDF-1.4 fake\n")
-	(out / "report" / "run_summary.txt").write_text("queries: {}\nfigures: {}\n".format(len(lines), ", ".join(names)))
+	(out / "report" / "run_summary.txt").write_text("FlaGs3 3.6.0\ncommand: {}\n\nqueries: {}\nfigures: {}\n".format(
+		command, len(lines), ", ".join(names)))
 	(out / "report" / "neighbourhoods.tsv").write_text("row_id\tgene\n")
 	if args.dg:
-		(out / "report" / "digest.md").write_text("# digest\n")
-	(out / "run.tsv").write_text("version\t3.4.0\ncommand\t" + " ".join(sys.argv) + "\n")
-	(out / "config.tsv").write_text("api_key\t{}\nuser_email\t{}\n".format(args.api, args.u))
-	(out / "console.log").write_text("key {} seen\n".format(args.api))
+		(out / "report" / "digest.md").write_text("# digest\ncommand: {}\n".format(command))
+	(out / "run.tsv").write_text("version\t3.6.0\ncommand\t" + command + "\n")
+	(out / "config.tsv").write_text("api_key\t{}\nuser_email\t{}\n".format(args.api or "", args.u))
+	(out / "console.log").write_text(">> fetch\n")
 	print("run directory: {}".format(out), flush=True)
 	return 0
 

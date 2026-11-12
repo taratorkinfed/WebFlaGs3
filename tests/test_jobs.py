@@ -3,7 +3,7 @@ import time
 import zipfile
 
 from config import Settings
-from jobs import JobDir, Runner, Sweeper
+from jobs import JobDir, Runner, Scrubber, Sweeper
 from capabilities import Capabilities
 from submission import Validator
 
@@ -23,15 +23,30 @@ def test_runner_produces_run_archive_and_scrubbed_log(workspace):
 	assert result["archive"] == "demo.zip" and result["figures"] == ["domains.svg", "neighbors.svg", "tree.svg"]
 	assert job_dir.pdfs() == {"domains.pdf", "neighbors.pdf", "tree.pdf"}
 	log = job_dir.log_file.read_text()
-	assert "TESTAPIKEY123" not in log and "-api ***" in log and "a@b.cd" not in log
+	assert "TESTAPIKEY123" not in log and "-api" not in log and "ncbi key: environment" in log and "a@b.cd" not in log
 	assert "-o <job>/run" in log and str(job_dir.path) not in log
 	assert "progress 3/3" in log and "progress 1/3" not in log and ">> report" in log
-	for name in ("run.tsv", "config.tsv", "console.log"):
-		text = (job_dir.run_dir / name).read_text()
-		assert "TESTAPIKEY123" not in text and "a@b.cd" not in text and "***" in text, name
-	names = zipfile.ZipFile(job_dir.archive("demo")).namelist()
+	archive = zipfile.ZipFile(job_dir.archive("demo"))
+	for name in archive.namelist():
+		text = archive.read(name).decode("utf-8", errors="replace")
+		assert "TESTAPIKEY123" not in text and "a@b.cd" not in text, name
+	for name in ("run.tsv", "config.tsv", "report/run_summary.txt"):
+		assert "-u ***" in (job_dir.run_dir / name).read_text() or "user_email\t***" in (job_dir.run_dir / name).read_text(), name
+	names = archive.namelist()
 	assert "run/figures/neighbors.svg" in names and "run/report/run_summary.txt" in names and not any(n.startswith("input") for n in names)
-	assert job_dir.summary().startswith("queries: 2") and job_dir.report_files() == ["neighbourhoods.tsv", "run_summary.txt"]
+	assert "queries: 2" in job_dir.summary() and job_dir.report_files() == ["neighbourhoods.tsv", "run_summary.txt"]
+
+
+def test_scrubber_cleans_every_listed_file(tmp_path):
+	(tmp_path / "report").mkdir()
+	for name in ("run.tsv", "config.tsv", "console.log", "report/run_summary.txt", "report/digest.md"):
+		(tmp_path / name).write_text("command: flags3 run -u me@lab.se -api SECRETKEY\n")
+	(tmp_path / "report" / "other.tsv").write_text("me@lab.se\n")
+	touched = Scrubber(["SECRETKEY", "me@lab.se", ""]).scrub(tmp_path)
+	assert sorted(touched) == ["config.tsv", "console.log", "report/digest.md", "report/run_summary.txt", "run.tsv"]
+	for name in touched:
+		assert (tmp_path / name).read_text() == "command: flags3 run -u *** -api ***\n"
+	assert (tmp_path / "report" / "other.tsv").read_text() == "me@lab.se\n"
 
 
 def test_runner_failure_raises_and_keeps_log(workspace):

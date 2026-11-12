@@ -107,14 +107,25 @@ credential: a results link is private to whoever has it, as on the lab server.
 
 ## Secrets and paths
 
-The NCBI API key reaches FlaGs3 as `-api`. FlaGs3 records its command line in
-`run/run.tsv` and its options in `run/config.tsv`, so after the run (success or
-failure) `Scrubber` replaces the key and the submitter's email with `***` in
-`run.tsv`, `config.tsv` and `console.log`. `LogSink` does the same to the live
-log and also shortens the job directory's absolute path to `<job>`, so the
-page shows nothing about the server's layout. A cleaner fix is an
-environment-variable fallback for the key inside FlaGs3; until then the scrub
-is the guarantee.
+The NCBI API key reaches FlaGs3 in the environment, as `NCBI_API_KEY`
+(`Command.environment`), never on the command line: FlaGs3 from 3.6.0 reads
+it there when `-api` is absent, and an older FlaGs3 simply runs without a
+key. A key on the command line is visible in the server's process list and
+is written by FlaGs3 into every place it records the command.
+
+The submitter's email still travels as `-u`, and FlaGs3 records its command
+line in `run/run.tsv`, its options in `run/config.tsv`, and the command
+again in `report/run_summary.txt` and `report/digest.md` — the last two are
+shown on the results page and are in the archive. After the run (success or
+failure) `Scrubber` replaces the email, and the key should it ever appear,
+with `***` in all five files plus `console.log`; the archive is built
+afterwards. The first version scrubbed only the three files in the run's
+root and so published the key in every summary; `SCRUBBED_FILES` is the
+list to extend when FlaGs3 starts recording the command somewhere new, and
+a test reads every file of a job's archive for the key and the address.
+`LogSink` does the same to the live log and also shortens the job
+directory's absolute path to `<job>`, so the page shows nothing about the
+server's layout.
 
 ## Expiry
 

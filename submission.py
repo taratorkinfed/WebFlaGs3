@@ -175,8 +175,6 @@ class Command:
 			argv += ["-n", str(sub.iterations)]
 		if sub.evalue is not None:
 			argv += ["-ce", "{:g}".format(sub.evalue)]
-		if s.ncbi_api_key:
-			argv += ["-api", s.ncbi_api_key]
 		if sub.tree == "tree":
 			argv.append("-t")
 		elif sub.tree == "tree_order":
@@ -199,4 +197,6 @@ class Command:
 		env = dict(base)
 		env["FLAGS3_HOME"] = str(self.settings.flags3_home)
 		env["PYTHONUNBUFFERED"] = "1"
+		if self.settings.ncbi_api_key:
+			env["NCBI_API_KEY"] = self.settings.ncbi_api_key
 		return env

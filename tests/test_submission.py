@@ -101,10 +101,11 @@ def test_command_argv(tmp_path):
 	s = Validator(200, ALL).parse(_form(tree="tree_order", domains="1", pdf=""))
 	argv = Command(settings, s, "/j/input.txt", "/j/run").argv()
 	assert argv[:7] == ["/opt/flags3", "run", "-i", "/j/input.txt", "-o", "/j/run", "-nt"]
-	assert argv[argv.index("-u") + 1] == "fed@example.org" and argv[argv.index("-api") + 1] == "KEY"
+	assert argv[argv.index("-u") + 1] == "fed@example.org" and "-api" not in argv and "KEY" not in argv
 	assert argv[argv.index("-c") + 1] == "6" and "-to" in argv and "-t" not in argv and "-d" in argv and "-pdf" not in argv
 	assert argv[argv.index("-ce") + 1] == "1e-10" and argv[argv.index("-cm") + 1] == "jackhmmer"
 	env = Command(settings, s, "a", "b").environment({"PATH": "/bin"})
 	assert env["FLAGS3_HOME"] == str(tmp_path) and env["PATH"] == "/bin" and env["PYTHONUNBUFFERED"] == "1"
+	assert env["NCBI_API_KEY"] == "KEY"
 	settings = Settings({"flags3_bin": "/opt/flags3", "flags3_home": str(tmp_path)})
-	assert "-api" not in Command(settings, s, "a", "b").argv()
+	assert "NCBI_API_KEY" not in Command(settings, s, "a", "b").environment({})
