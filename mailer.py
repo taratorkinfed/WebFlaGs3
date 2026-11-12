@@ -9,6 +9,8 @@ Results: {link}
 
 The page and the downloadable archive stay available for {retention} from now.
 
+Questions or problems: {contact}
+
 FlaGs3, the Atkinson lab
 {site}
 """
@@ -19,6 +21,8 @@ The log on the results page shows how far it got: {link}
 
 The usual causes are an accession that no database can resolve and an NCBI
 outage. You can resubmit with the problem lines removed.
+
+If it keeps failing, write to {contact} with the link above.
 
 FlaGs3, the Atkinson lab
 {site}
@@ -81,5 +85,5 @@ class Notice:
 		if not self.wanted:
 			return False
 		body = template.format(run_name=self.submission.run_name, link=self.link,
-			retention=self.settings.retention, site=self.settings.site_url)
+			retention=self.settings.retention, site=self.settings.site_url, contact=self.settings.contact_email)
 		return self.mailer.send(self.submission.email, subject.format(self.submission.run_name), body)

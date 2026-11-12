@@ -44,8 +44,9 @@
 						<p class="fs-5"><span class="fw-medium">Run name:</span> {{ submission.run_name }}</p>
 						<p class="fs-5">The job did not finish ({{ status.status }}). The log below says how far it got; the usual
 							causes are an input no database can resolve and an NCBI outage.</p>
-						<p class="fs-5 fw-light">Resubmit with the problem lines removed, or contact us with the job id
-							<code>{{ job_id }}</code> — the run directory is kept for a while.</p>
+						<p class="fs-5 fw-light">Resubmit with the problem lines removed, or write to
+							<a href="mailto:{{ settings.contact_email }}?subject=FlaGs3%20job%20{{ job_id }}">{{ settings.contact_email }}</a>
+							with the job id <code>{{ job_id }}</code> — the run directory is kept for a while.</p>
 					</div>
 				{% endif %}
 				{% if status.status == "finished" %}

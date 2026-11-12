@@ -61,6 +61,13 @@ def test_full_job_flow(client, flask_app):
 	assert archive.status_code == 200 and archive.mimetype == "application/zip" and "webrun.zip" in archive.headers["Content-Disposition"]
 
 
+def test_contact_address_is_shown(client, flask_app):
+	assert b"mailto:fedor.taratorkin@med.lu.se" in client.get("/").data
+	job_id = client.post("/", data={**FORM, "accessions": "WP_FAIL.1"}).headers["Location"].rsplit("/", 1)[1]
+	_work(flask_app)
+	assert b"mailto:fedor.taratorkin@med.lu.se?subject=FlaGs3%20job%20" + job_id.encode() in client.get("/results/" + job_id).data
+
+
 def test_failed_job_page(client, flask_app):
 	page = client.post("/", data={**FORM, "accessions": "WP_FAIL.1"})
 	job_id = page.headers["Location"].rsplit("/", 1)[1]

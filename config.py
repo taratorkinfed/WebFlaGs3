@@ -17,6 +17,7 @@ DEFAULTS = {
 	"lab_url": "https://server.atkinson-lab.com",
 	"site_name": "FlaGs3",
 	"site_url": "https://flags.atkinson-lab.com",
+	"contact_email": "fedor.taratorkin@med.lu.se",
 	"smtp_host": "smtps.lu.se",
 	"smtp_port": "587",
 	"smtp_user": "",
@@ -41,6 +42,7 @@ class Settings:
 		self.lab_url = merged["lab_url"].rstrip("/")
 		self.site_name = merged["site_name"]
 		self.site_url = merged["site_url"].rstrip("/")
+		self.contact_email = merged["contact_email"]
 		self.smtp_host = merged["smtp_host"]
 		self.smtp_port = int(merged["smtp_port"])
 		self.smtp_user = merged["smtp_user"]

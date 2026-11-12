@@ -100,7 +100,9 @@ from a request. A message that cannot be sent — SMTP down, login refused
 — returns `False` and never fails the job; `notified` in the job's result
 records which it was. A worker killed outright (a restart mid-job) sends
 nothing. The address is validated to contain no whitespace and the run
-name to a fixed alphabet before either reaches a header.
+name to a fixed alphabet before either reaches a header. Both messages, the
+failed-job page and the foot of the main page name `contact_email` from
+`.env` as the place to write to.
 
 ## What the user can reach
 

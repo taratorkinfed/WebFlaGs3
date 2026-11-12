@@ -26,6 +26,7 @@ def test_finished_and_failed_notices(smtp):
 	body = first.get_content()
 	assert "https://flags.example.org/results/abc123" in body and "5 days" in body and '"my_run"' in body
 	assert second["Subject"] == "FlaGs3 job failed: my_run" and "did not finish" in second.get_content()
+	assert "fedor.taratorkin@med.lu.se" in body and "fedor.taratorkin@med.lu.se" in second.get_content()
 
 
 def test_opt_out_and_smtp_failure(smtp):
