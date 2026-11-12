@@ -1,15 +1,34 @@
 import json
 import os
+import re
 import shutil
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 import rq
 
 from config import Settings
 from mailer import Notice
 from submission import Command, Submission
+
+CLUSTERS_LEGEND = "protein_clusters_legend.txt"
+SYSTEMS_SUMMARY = "systems_summary.txt"
+CLUSTER_FIGURES = ("classic", "neighbors", "tree", "all-in-one")
+SYSTEM_FIGURES = ("sismis", "genomad", "plasmids", "defence", "all-in-one")
+PART = re.compile(r"_part\d+$")
+
+
+@dataclass(frozen=True)
+class FigureView:
+	title: str
+	svg: str
+	pdf: Optional[str]
+	clusters_legend: Optional[str]
+	systems_summary: Optional[str]
+
 
 LOG_LIMIT = 200_000
 SAVE_INTERVAL = 0.5
@@ -67,10 +86,17 @@ class JobDir:
 			return []
 		return sorted(p.name for p in self.figures_dir.iterdir() if p.suffix == ".svg" and p.is_file())
 
-	def pdfs(self) -> set[str]:
-		if not self.figures_dir.is_dir():
-			return set()
-		return {p.name for p in self.figures_dir.iterdir() if p.suffix == ".pdf"}
+	def figure_views(self) -> list[FigureView]:
+		present = {p.name for p in self.figures_dir.iterdir()} if self.figures_dir.is_dir() else set()
+		views = []
+		for svg in self.figures():
+			title = svg[:-len(".svg")]
+			kind = PART.sub("", title)
+			pdf = kind + ".pdf"
+			views.append(FigureView(title, svg, pdf if pdf in present else None,
+				CLUSTERS_LEGEND if kind in CLUSTER_FIGURES and CLUSTERS_LEGEND in present else None,
+				SYSTEMS_SUMMARY if kind in SYSTEM_FIGURES and SYSTEMS_SUMMARY in present else None))
+		return views
 
 	def report_files(self) -> list[str]:
 		if not self.report_dir.is_dir():

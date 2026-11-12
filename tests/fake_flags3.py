@@ -66,6 +66,9 @@ def main() -> int:
 	(out / "report").mkdir(parents=True)
 	names = ["neighbors"] + (["tree"] if args.t or args.to else []) + (["domains"] if args.d else [])
 	names += ["all-in-one"] if (args.df or args.pl or args.gn or args.pf or args.ss) else []
+	(out / "figures" / "protein_clusters_legend.txt").write_text("Q1(1)\tWP_1.1\tprotein\n")
+	if "all-in-one" in names:
+		(out / "figures" / "systems_summary.txt").write_text("1 neighbourhoods in the run\n")
 	for name in names:
 		(out / "figures" / (name + ".svg")).write_text(SVG.format(name))
 		if args.pdf:

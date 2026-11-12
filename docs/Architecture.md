@@ -105,6 +105,16 @@ which `shutil.make_archive` builds from `run/` alone, so `input.txt`,
 `request.json` and `log.txt` are never in it. The job id is the only
 credential: a results link is private to whoever has it, as on the lab server.
 
+Each figure on the results page is a `FigureView` (`JobDir.figure_views`):
+its SVG, its PDF when there is one (a figure split into parts shares one
+PDF), and two text companions FlaGs3 writes beside the figures —
+`protein_clusters_legend.txt` for the figures that show families by number
+(`CLUSTER_FIGURES`: classic, neighbors, tree, all-in-one) and
+`systems_summary.txt` for the figures that draw systems (`SYSTEM_FIGURES`).
+A link is offered only when the file exists. The two tuples name FlaGs3's
+shipped figures; a figure the web app does not know simply gets no
+companion link.
+
 ## Secrets and paths
 
 The NCBI API key reaches FlaGs3 in the environment, as `NCBI_API_KEY`

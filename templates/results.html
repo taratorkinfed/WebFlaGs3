@@ -54,15 +54,17 @@
 						<h2>Figures</h2>
 					</div>
 					{% if figures %}
-						{% for name in figures %}
+						{% for figure in figures %}
 							<div class="col-12">
-								<p class="fs-5 fw-medium">{{ name[:-4] }}
+								<p class="fs-5 fw-medium">{{ figure.title }}
 									<small class="fw-light">
-										<a href="{{ url_for('served', job_id=job_id, filepath='figures/' + name) }}" target="_blank">open SVG</a>
-										{% if name[:-4] + '.pdf' in pdfs %}· <a href="{{ url_for('served', job_id=job_id, filepath='figures/' + name[:-4] + '.pdf') }}" target="_blank">PDF</a>{% endif %}
+										<a href="{{ url_for('served', job_id=job_id, filepath='figures/' + figure.svg) }}" target="_blank">open SVG</a>
+										{% if figure.pdf %}· <a href="{{ url_for('served', job_id=job_id, filepath='figures/' + figure.pdf) }}" target="_blank">PDF</a>{% endif %}
+										{% if figure.clusters_legend %}· <a href="{{ url_for('served', job_id=job_id, filepath='figures/' + figure.clusters_legend) }}" target="_blank">protein clusters legend (.txt)</a>{% endif %}
+										{% if figure.systems_summary %}· <a href="{{ url_for('served', job_id=job_id, filepath='figures/' + figure.systems_summary) }}" target="_blank">systems summary (.txt)</a>{% endif %}
 									</small></p>
 								<div class="figure-box border rounded p-2 bg-white">
-									<img src="{{ url_for('served', job_id=job_id, filepath='figures/' + name) }}" alt="{{ name }}">
+									<img src="{{ url_for('served', job_id=job_id, filepath='figures/' + figure.svg) }}" alt="{{ figure.title }}">
 								</div>
 								<p></p>
 							</div>

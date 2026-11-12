@@ -116,8 +116,8 @@ def results(job_id: str):
 	if job is None or not job_dir.exists:
 		return _page("expired.html"), 404
 	status = JobStatus(job)
-	figures = job_dir.figures() if status.status == "finished" else []
-	return _page("results.html", job_id=job_id, status=status, job_dir=job_dir, figures=figures, pdfs=job_dir.pdfs(),
+	figures = job_dir.figure_views() if status.status == "finished" else []
+	return _page("results.html", job_id=job_id, status=status, job_dir=job_dir, figures=figures,
 		summary=job_dir.summary() if status.status == "finished" else "", submission=job_dir.submission())
 
 

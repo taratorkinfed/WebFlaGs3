@@ -21,7 +21,10 @@ def test_runner_produces_run_archive_and_scrubbed_log(workspace):
 	assert job_dir.list_file.read_text() == "WP_1.1\nAAC73113.1\tU00096\n"
 	result = Runner(settings, job_dir).run()
 	assert result["archive"] == "demo.zip" and result["figures"] == ["domains.svg", "neighbors.svg", "tree.svg"]
-	assert job_dir.pdfs() == {"domains.pdf", "neighbors.pdf", "tree.pdf"}
+	views = {v.title: v for v in job_dir.figure_views()}
+	assert views["tree"].pdf == "tree.pdf" and views["tree"].clusters_legend == "protein_clusters_legend.txt"
+	assert views["neighbors"].clusters_legend and views["domains"].clusters_legend is None
+	assert all(v.systems_summary is None for v in views.values())
 	log = job_dir.log_file.read_text()
 	assert "TESTAPIKEY123" not in log and "-api" not in log and "ncbi key: environment" in log and "a@b.cd" not in log
 	assert "-o <job>/run" in log and str(job_dir.path) not in log
@@ -47,6 +50,22 @@ def test_scrubber_cleans_every_listed_file(tmp_path):
 	for name in touched:
 		assert (tmp_path / name).read_text() == "command: flags3 run -u *** -api ***\n"
 	assert (tmp_path / "report" / "other.tsv").read_text() == "me@lab.se\n"
+
+
+def test_figure_views_for_parts_and_systems(tmp_path):
+	job_dir = JobDir(tmp_path, "j")
+	job_dir.figures_dir.mkdir(parents=True)
+	for name in ("neighbors_part1.svg", "neighbors_part2.svg", "neighbors.pdf", "all-in-one.svg", "defence.svg", "classic.svg",
+			"protein_clusters_legend.txt", "systems_summary.txt"):
+		(job_dir.figures_dir / name).write_text("x")
+	views = {v.title: v for v in job_dir.figure_views()}
+	assert list(views) == ["all-in-one", "classic", "defence", "neighbors_part1", "neighbors_part2"]
+	assert views["neighbors_part2"].pdf == "neighbors.pdf" and views["neighbors_part2"].clusters_legend
+	assert views["all-in-one"].clusters_legend and views["all-in-one"].systems_summary and views["all-in-one"].pdf is None
+	assert views["defence"].systems_summary and views["defence"].clusters_legend is None
+	assert views["classic"].clusters_legend and views["classic"].systems_summary is None
+	(job_dir.figures_dir / "systems_summary.txt").unlink()
+	assert all(v.systems_summary is None for v in job_dir.figure_views())
 
 
 def test_runner_failure_raises_and_keeps_log(workspace):
