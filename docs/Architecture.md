@@ -100,7 +100,9 @@ or choosing "No tree" is respected. A default the server's FlaGs3 cannot
 deliver is shown off and disabled, not ticked and greyed. A job without a
 tree still gets the all-in-one figure from FlaGs3 3.7.0 on.
 
-Synteny (`-sy`, FlaGs3 3.8.0) is a fourth choice of the tree select, not a
+The nucleotide similarity graph (called synteny until FlaGs3 3.10.0; the form
+value, the feature name and the option the job passes, `-sy`, keep the old
+word, which every FlaGs3 from 3.8.0 accepts) is a fourth choice of the tree select, not a
 switch of its own: it means nothing without rows in tree order, and as a
 choice of the same field it cannot be combined with anything else.
 `TREE_FLAGS` maps each choice to its one option; `-sy` implies `-to` in
