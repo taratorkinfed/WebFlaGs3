@@ -49,6 +49,7 @@ def main() -> int:
 	parser.add_argument("-pf", action="store_true")
 	parser.add_argument("-ss", action="store_true")
 	parser.add_argument("-sr", type=int)
+	parser.add_argument("-cv", action="store_true")
 	parser.add_argument("-cr", action="store_true")
 	parser.add_argument("-dg", action="store_true")
 	parser.add_argument("-pdf", action="store_true")

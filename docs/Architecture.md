@@ -305,3 +305,16 @@ The results page then names the steps that failed, from the `status` and
 `error` lines of every `<stage>/status.tsv` (`JobDir.failed_steps`), in a
 warning box above the figures. Nothing is stored for this: the page reads the
 run directory, as it does for the figures.
+
+## geNomad's whole-sequence calls
+
+geNomad gives two kinds of result. Proviruses have coordinates and are drawn
+as bands whenever geNomad is on. A plasmid or virus call is a classification
+of the whole sequence geNomad was given; FlaGs3 writes those to
+`report/contig_verdicts.tsv` and leaves them out of the figures unless `-cv`
+is given. The form's "Show geNomad's plasmid and virus calls" switch
+(`Submission.verdicts`) adds `-cv`; it is off by default and is dropped by
+the validator unless geNomad is among the chosen scanners. The warning under
+the switch is the reason for opt-in: a job here hands geNomad the scan range
+around the query, not the contig, so the call describes that stretch, and
+FlaGs3 prints the same warning in the job log.

@@ -187,6 +187,14 @@
 					<div class="invalid-feedback">{{ submission.errors.scan_range }}</div>
 					<div class="form-text">For geNomad and Sismis. PlasmidFinder always reads the whole contig; the defence tools read the flanking genes.</div>
 				</div>
+				<div class="col-md-6">
+					<div class="form-check form-switch">
+						<input class="form-check-input" type="checkbox" id="verdicts" name="verdicts" value="1"
+							{% if submission.verdicts %}checked{% endif %} {% if not capabilities.has("genomad") %}disabled{% endif %}>
+						<label class="form-check-label" for="verdicts">Show geNomad's plasmid and virus calls for the scanned sequence</label>
+					</div>
+					<div class="form-text">{% if capabilities.has("genomad") %}Needs geNomad switched on. Besides proviruses, which have coordinates and are always drawn, geNomad classifies the scanned sequence as a whole; this prints that call (<code>plasmid</code>, <code>virus</code>) beside the row. <span class="fw-medium">It can be a false positive:</span> geNomad sees only the stretch set by the scan range, not the whole contig, so the call describes that stretch and can change with the range.{% else %}Not available on this server yet.{% endif %}</div>
+				</div>
 				<div class="col-md-12">
 					<h5>Run</h5>
 				</div>

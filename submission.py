@@ -38,6 +38,8 @@ SCANNERS = (
 	Scanner("sismis", "-ss", "Sismis", "Secretion systems in the sequence around each query.", True),
 )
 
+VERDICT_SCANNER = "genomad"
+
 
 @dataclass
 class Submission:
@@ -53,6 +55,7 @@ class Submission:
 	digest: bool = False
 	scanners: list[str] = field(default_factory=list)
 	scan_range: int = 20000
+	verdicts: bool = False
 	clusters_legend: bool = True
 	pdf: bool = True
 	notify: bool = True
@@ -124,6 +127,7 @@ class Validator:
 		s.digest = bool(form.get("digest"))
 		s.scanners = [sc.name for sc in SCANNERS if form.get(sc.name) and self.capabilities.has(sc.name)]
 		s.scan_range = self._integer(form, "scan_range", s.scan_range, SCAN_RANGE, s.errors)
+		s.verdicts = bool(form.get("verdicts")) and VERDICT_SCANNER in s.scanners
 		s.clusters_legend = bool(form.get("clusters_legend")) and self.capabilities.has("clusters_legend")
 		s.pdf = bool(form.get("pdf"))
 		s.notify = bool(form.get("notify"))
@@ -214,6 +218,8 @@ class Command:
 		argv += [sc.flag for sc in chosen]
 		if any(sc.windowed for sc in chosen):
 			argv += ["-sr", str(sub.scan_range)]
+		if sub.verdicts and VERDICT_SCANNER in sub.scanners:
+			argv.append("-cv")
 		if sub.blast:
 			argv += ["-bm", "local", "-bd", s.blast_db, "-bh", str(max(MIN_BLAST_HITS, s.blast_total_hits // len(sub.blast)))]
 			if s.blast_exclude:

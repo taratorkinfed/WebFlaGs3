@@ -1,6 +1,6 @@
 from capabilities import Capabilities
 from config import Settings
-from submission import Command, Validator
+from submission import Command, Submission, Validator
 
 ALL = Capabilities.everything()
 NONE = Capabilities(())
@@ -142,3 +142,15 @@ def test_synteny_is_a_tree_choice_from_flags3_3_8(tmp_path):
 	bare = Validator(200, Capabilities(set(), (3, 8, 0))).parse(_form(tree="synteny"))
 	assert bare.tree == "none" and not Capabilities(set(), (3, 8, 0)).has("synteny")
 	assert Capabilities.everything().has("synteny") and Validator(200, Capabilities.everything()).parse(_form()).tree != "synteny"
+
+
+def test_genomad_whole_sequence_calls_are_opt_in_and_need_genomad(tmp_path):
+	settings = Settings({"flags3_bin": "/opt/flags3", "flags3_home": str(tmp_path)})
+	assert not Submission().verdicts
+	on = Validator(200, ALL).parse(_form(genomad="1", verdicts="1"))
+	argv = Command(settings, on, "a", "b").argv()
+	assert on.accepted and on.verdicts and "-cv" in argv and "-gn" in argv
+	plain = Validator(200, ALL).parse(_form(genomad="1"))
+	assert not plain.verdicts and "-cv" not in Command(settings, plain, "a", "b").argv()
+	alone = Validator(200, ALL).parse(_form(verdicts="1"))
+	assert alone.accepted and not alone.verdicts and "-cv" not in Command(settings, alone, "a", "b").argv()
