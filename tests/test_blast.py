@@ -100,3 +100,43 @@ def test_blast_job_through_the_form(client, flask_app, workspace):
 	refused = client.post("/", data={**FORM, "blast": "not a protein 1"})
 	assert refused.status_code == 400 and b"Not a protein accession or a protein sequence" in refused.data
 	assert b"not a protein 1" in refused.data
+
+
+def _submit(client, email="limited@example.org", address="10.0.0.1", **extra):
+	return client.post("/", data={**FORM, "email": email, "blast": "WP_005328829.1", **extra}, environ_overrides={"REMOTE_ADDR": address})
+
+
+def test_three_blast_jobs_at_a_time_per_address_and_email(client, flask_app):
+	for n in range(3):
+		assert _submit(client, email="user{}@example.org".format(n)).status_code == 302
+	fourth = _submit(client, email="user3@example.org")
+	assert fourth.status_code == 429 and b"3 BlastP jobs from this address are already queued or running" in fourth.data
+	assert b"WP_005328829.1" in fourth.data and len(flask_app.queue) == 3
+	plain = client.post("/", data={**FORM, "accessions": "WP_1.1", "email": "user0@example.org"}, environ_overrides={"REMOTE_ADDR": "10.0.0.1"})
+	assert plain.status_code == 302
+	assert _submit(client, email="other@example.org", address="10.0.0.2").status_code == 302
+	for n in range(2):
+		assert _submit(client, email="Same@Example.org", address="10.0.1.{}".format(n)).status_code == 302
+	assert _submit(client, email="same@example.org", address="10.0.1.9").status_code == 302
+	by_email = _submit(client, email=" SAME@example.org", address="10.0.1.10")
+	assert by_email.status_code == 429 and b"from this email address" in by_email.data
+	_work(flask_app)
+	assert _submit(client, email="user3@example.org").status_code == 302
+	_work(flask_app)
+
+
+def test_limit_counts_only_live_jobs_and_can_be_switched_off(flask_app):
+	from limits import ActiveJobs, BlastLimit
+	connection = redis.from_url(REDIS_URL)
+	jobs = ActiveJobs(connection, "unit:blast")
+	key = jobs.key("address", "192.0.2.7")
+	connection.delete(key)
+	assert "192.0.2.7" not in key and jobs.key("email", "A@b.c ") == jobs.key("email", "a@b.c")
+	jobs.add("address", "192.0.2.7", "0" * 32)
+	assert connection.scard(key) == 1 and 0 < connection.ttl(key) <= 7 * 24 * 3600
+	assert jobs.count("address", "192.0.2.7") == 0 and connection.scard(key) == 0
+	off = BlastLimit(connection, "unit", 0)
+	for n in range(5):
+		off.record("192.0.2.8", "x@y.z", "{:032d}".format(n))
+	assert off.refusal("192.0.2.8", "x@y.z") is None
+	assert BlastLimit(connection, "unit", 3).refusal("", "nobody@y.z") is None

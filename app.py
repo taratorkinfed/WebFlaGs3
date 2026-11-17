@@ -12,6 +12,7 @@ from capabilities import Capabilities
 from config import Settings
 from examples import EXAMPLES, INTRO
 from jobs import JobDir, run_job
+from limits import BlastLimit
 from mailer import Mailer
 from submission import SCANNERS, Submission, Validator
 
@@ -23,6 +24,7 @@ queue = rq.Queue(name=settings.queue, connection=redis_connection)
 capabilities = Capabilities.probe(settings)
 validator = Validator(settings.max_lines, capabilities, settings.blast_max_queries)
 mail_enabled = Mailer(settings).enabled
+blast_limit = BlastLimit(redis_connection, settings.queue, settings.blast_limit)
 
 DEMO_FILE = "demo_list.txt"
 JOB_ID = re.compile(r"^[0-9a-f]{32}$")
@@ -102,11 +104,18 @@ def index():
 	submission = validator.parse(flask.request.form, upload_text)
 	if not submission.accepted:
 		return _page("index.html", submission=submission), 400
+	address = flask.request.remote_addr or ""
+	refusal = blast_limit.refusal(address, submission.email) if submission.blast else None
+	if refusal:
+		submission.errors["blast"] = refusal
+		return _page("index.html", submission=submission), 429
 	job_id = uuid.uuid4().hex
 	JobDir(settings.jobs_dir, job_id).create(submission)
 	queue.enqueue(run_job, job_id, job_id=job_id, job_timeout=settings.job_timeout,
 		result_ttl=settings.results_ttl, failure_ttl=settings.results_ttl,
 		meta={"log": "", "run_name": submission.run_name})
+	if submission.blast:
+		blast_limit.record(address, submission.email, job_id)
 	return flask.redirect(flask.url_for("results", job_id=job_id))
 
 

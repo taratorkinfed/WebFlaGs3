@@ -2,7 +2,7 @@
 
 ## Shape
 
-Seven Python files, five templates, no database beyond Redis.
+Eight Python files, five templates, no database beyond Redis.
 
 - `config.py` — `Settings`, read once from `.env` (python-dotenv). Nothing
   machine-specific or secret is in code; `DEFAULTS` are the lab server's paths.
@@ -56,6 +56,8 @@ Seven Python files, five templates, no database beyond Redis.
 - `jobs.py` — `JobDir` (the layout of one job's directory), `Runner` (worker
   side: run the subprocess, stream its output into RQ meta, scrub, archive),
   `Sweeper` (delete expired job directories), `run_job` (the RQ entry point).
+- `limits.py` — `BlastLimit`, how many BlastP jobs one address or one
+  email may have queued or running (see Limits below).
 - `mailer.py` — `Mailer` (one plain-text message through SMTP with
   STARTTLS and a login) and `Notice` (the finished and failed texts for one
   job, with its results link built from `site_url`).
@@ -107,7 +109,9 @@ fast RefSeq search without a login would otherwise attract exactly that:
   `blast/hits.tsv` (accession, E-value, bit score, description of the hits
   that became queries) — no alignments, no other output format, and no
   option on the form that reaches `blastp`: E-value and database are the
-  server's.
+  server's;
+- the number of BlastP jobs one address or one email may have in the queue
+  at a time (Limits below).
 
 `BlastQueries` reads the box line by line. An accession on a line of its
 own (RefSeq `WP_`/`NP_`/`YP_`/`XP_`/`AP_`, or an INSDC protein id) is a
@@ -129,6 +133,34 @@ from the run's files like the other server paths. An accession's sequence
 is fetched from NCBI by FlaGs3, so an accession start still depends on
 NCBI answering; a pasted sequence does not, until the hits are resolved to
 genomes.
+
+## Limits
+
+A BlastP job is refused when its submitter already has `blast_limit` (3)
+BlastP jobs queued or running, counted separately for the client address
+and for the email address, so three from one address and any email, or
+three for one email from any address, close the door. Jobs without BlastP
+are not counted and not limited, and there is no daily allowance: the
+limit is on what waits and runs at once, which is what a flood would
+occupy.
+
+`limits.ActiveJobs` keeps one Redis set of job ids per address and per
+email, under `<queue>:blast:active:<kind>:<hash>`; the key is a truncated
+SHA-256 of the lower-cased value, so neither addresses nor emails are
+readable in the shared Redis. Nothing removes a job from its set when it
+ends. Instead the count asks RQ for the status of each id and drops those
+no longer queued or running, so a job that finished, failed, was killed
+with its worker or expired frees its place the same way, with no callback
+to miss. The sets expire a week after their last addition. Check and
+record are two steps and not atomic: two submissions in the same instant
+could both pass at two, giving four; that is accepted, the limit being a
+brake and not an account.
+
+The address is `REMOTE_ADDR` as nginx hands it over in `uwsgi_params`, the
+peer of the TLS connection, and not a forwarded-for header, which a client
+could write itself. Everyone behind one NAT address shares one allowance;
+`blast_limit` in `.env` is the dial, and 0 turns the limit off. A refused
+submission is answered 429 with the form filled in as it was sent.
 
 ## Email
 

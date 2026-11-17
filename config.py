@@ -19,6 +19,7 @@ DEFAULTS = {
 	"blast_exclude": "2759",
 	"blast_total_hits": "50",
 	"blast_max_queries": "5",
+	"blast_limit": "3",
 	"lab_url": "https://server.atkinson-lab.com",
 	"site_name": "FlaGs3",
 	"site_url": "https://flags.atkinson-lab.com",
@@ -49,6 +50,7 @@ class Settings:
 		self.blast_exclude = "".join(merged["blast_exclude"].split())
 		self.blast_total_hits = int(merged["blast_total_hits"])
 		self.blast_max_queries = int(merged["blast_max_queries"])
+		self.blast_limit = int(merged["blast_limit"])
 		self.lab_url = merged["lab_url"].rstrip("/")
 		self.site_name = merged["site_name"]
 		self.site_url = merged["site_url"].rstrip("/")

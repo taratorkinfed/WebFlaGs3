@@ -71,7 +71,8 @@
 					<h5>Start from BlastP</h5>
 					<p>Optional. Give up to {{ settings.blast_max_queries }} starting proteins and FlaGs3 finds their homologues itself: it searches
 						{{ settings.blast_db_label }} with BlastP and uses the best hits as queries, {{ settings.blast_total_hits }} in all,
-						shared equally between the starting proteins. The hits join the accession list above, which may then be left empty.</p>
+						shared equally between the starting proteins. The hits join the accession list above, which may then be left empty.
+						{% if settings.blast_limit > 0 %}One address or email can have {{ settings.blast_limit }} BlastP jobs queued or running at a time.{% endif %}</p>
 				</div>
 				<div class="col-md-7">
 					<label for="blast" class="form-label">Starting proteins</label>
