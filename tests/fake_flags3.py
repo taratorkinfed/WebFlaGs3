@@ -25,7 +25,7 @@ def main() -> int:
 		print(LISTING, end="")
 		return 0
 	if sys.argv[1:2] == ["--version"]:
-		print("FlaGs3 3.6.0")
+		print("FlaGs3 3.7.0")
 		return 0
 	parser = argparse.ArgumentParser()
 	parser.add_argument("command")
@@ -52,6 +52,10 @@ def main() -> int:
 	parser.add_argument("-dg", action="store_true")
 	parser.add_argument("-pdf", action="store_true")
 	parser.add_argument("-pcl", action="store_true")
+	parser.add_argument("-bm")
+	parser.add_argument("-bd")
+	parser.add_argument("-bh", type=int)
+	parser.add_argument("-bx")
 	args = parser.parse_args()
 	out = Path(args.o)
 	lines = [l for l in Path(args.i[0]).read_text().splitlines() if l.strip()]
@@ -70,6 +74,14 @@ def main() -> int:
 	(out / "report").mkdir(parents=True)
 	names = ["neighbors"] + (["tree"] if args.t or args.to else []) + (["domains"] if args.d else [])
 	names += ["all-in-one"] if (args.df or args.pl or args.gn or args.pf or args.ss) else []
+	starts = [l.split("\t")[0] for l in lines if l.endswith("\tBLAST")]
+	if starts:
+		if args.bm != "local" or not args.bd:
+			print("Error: BLAST line without a local database", flush=True)
+			return 1
+		print("BlastP (local) for {} queries against {}, BLASTDB={}".format(len(starts), args.bd, os.environ.get("BLASTDB", "")), flush=True)
+		(out / "blast").mkdir(parents=True)
+		(out / "blast" / "hits.tsv").write_text("query\taccession\n" + "".join("q\tWP_{}\n".format(i) for i in range(args.bh * len(starts))))
 	(out / "figures" / "protein_clusters_legend.txt").write_text("Q1(1)\tWP_1.1\tprotein\n")
 	if "all-in-one" in names:
 		(out / "figures" / "systems_summary.txt").write_text("1 neighbourhoods in the run\n")

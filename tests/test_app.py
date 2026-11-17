@@ -95,8 +95,8 @@ def test_unknown_job_is_expired_page(client):
 def test_health(client):
 	data = client.get("/health").get_json()
 	assert data["status"] == "ok" and data["redis"]
-	assert data["features"] == ["tree", "mmseqs", "domains", "defensefinder", "genomad", "plasmidfinder", "sismis", "clusters_legend"]
-	assert data["flags3"] == "3.6.0"
+	assert data["features"] == ["tree", "mmseqs", "domains", "defensefinder", "genomad", "plasmidfinder", "sismis", "blast", "clusters_legend"]
+	assert data["flags3"] == "3.7.0"
 	assert data["mail"] is True
 
 

@@ -74,7 +74,7 @@ class JobDir:
 
 	def create(self, submission: Submission) -> "JobDir":
 		self.path.mkdir(parents=True, exist_ok=False)
-		self.list_file.write_text(submission.list_text + "\n")
+		self.list_file.write_text(submission.input_text + "\n")
 		self.request_file.write_text(json.dumps(submission.to_dict(), indent=1))
 		return self
 
@@ -169,14 +169,16 @@ class Runner:
 		submission = self.job_dir.submission()
 		command = Command(self.settings, submission, str(self.job_dir.list_file), str(self.job_dir.run_dir))
 		sink = LogSink(self.job, [(self.settings.ncbi_api_key, "***"), (submission.email, "***"),
-			(str(self.job_dir.path), "<job>")])
+			(str(self.job_dir.path), "<job>"), (self.settings.blast_db, "<blastdb>"),
+			(os.path.dirname(self.settings.blast_db), "<blastdb>")])
 		if self.job is not None:
 			self.job.meta["run_name"] = submission.run_name
 			self.job.save_meta()
 		try:
 			code = self._execute(command, sink)
 		finally:
-			Scrubber([self.settings.ncbi_api_key, submission.email]).scrub(self.job_dir.run_dir)
+			Scrubber([self.settings.ncbi_api_key, submission.email, self.settings.blast_db,
+				os.path.dirname(self.settings.blast_db)]).scrub(self.job_dir.run_dir)
 		sink.save(force=True)
 		self.job_dir.log_file.write_text(sink.text)
 		if code != 0:

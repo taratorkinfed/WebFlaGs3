@@ -14,6 +14,11 @@ DEFAULTS = {
 	"job_timeout": "3h",
 	"cpu_per_job": "4",
 	"max_lines": "200",
+	"blast_db": "",
+	"blast_db_label": "RefSeq proteins without eukaryotes",
+	"blast_exclude": "2759",
+	"blast_total_hits": "50",
+	"blast_max_queries": "5",
 	"lab_url": "https://server.atkinson-lab.com",
 	"site_name": "FlaGs3",
 	"site_url": "https://flags.atkinson-lab.com",
@@ -39,6 +44,11 @@ class Settings:
 		self.job_timeout = merged["job_timeout"]
 		self.cpu_per_job = int(merged["cpu_per_job"])
 		self.max_lines = int(merged["max_lines"])
+		self.blast_db = merged["blast_db"].strip()
+		self.blast_db_label = merged["blast_db_label"]
+		self.blast_exclude = "".join(merged["blast_exclude"].split())
+		self.blast_total_hits = int(merged["blast_total_hits"])
+		self.blast_max_queries = int(merged["blast_max_queries"])
 		self.lab_url = merged["lab_url"].rstrip("/")
 		self.site_name = merged["site_name"]
 		self.site_url = merged["site_url"].rstrip("/")

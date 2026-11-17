@@ -68,6 +68,24 @@
 					<div class="form-text">The file replaces the text box when both are given.</div>
 				</div>
 				<div class="col-md-12">
+					<h5>Start from BlastP</h5>
+					<p>Optional. Give up to {{ settings.blast_max_queries }} starting proteins and FlaGs3 finds their homologues itself: it searches
+						{{ settings.blast_db_label }} with BlastP and uses the best hits as queries, {{ settings.blast_total_hits }} in all,
+						shared equally between the starting proteins. The hits join the accession list above, which may then be left empty.</p>
+				</div>
+				<div class="col-md-7">
+					<label for="blast" class="form-label">Starting proteins</label>
+					<textarea class="form-control font-monospace{% if submission.errors.blast %} is-invalid{% endif %}" id="blast" name="blast" rows="4" spellcheck="false"
+						placeholder="WP_005328829.1&#10;&gt;my protein&#10;MDQGKNVLEWDEYFMGVAALSALRSKDPHTQVGACIV…"
+						{% if not capabilities.has("blast") %}disabled{% endif %}>{{ submission.blast_text }}</textarea>
+					<div class="invalid-feedback">{{ submission.errors.blast | safe }}</div>
+				</div>
+				<div class="col-md-5">
+					<div class="form-text mt-md-4 pt-md-2">{% if capabilities.has("blast") %}An accession on a line of its own, or a protein sequence in FASTA or as
+						bare residues; separate sequences with a FASTA header or an empty line. The hits and their E-values are in
+						<code>blast/hits.tsv</code> of the archive.{% else %}Not available on this server yet.{% endif %}</div>
+				</div>
+				<div class="col-md-12">
 					<h5>Neighbourhood and clustering</h5>
 				</div>
 				<div class="col-md-3">

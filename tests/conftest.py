@@ -51,6 +51,8 @@ def workspace(tmp_path_factory):
 	base = tmp_path_factory.mktemp("flags3_web")
 	home = base / "home"
 	home.mkdir()
+	(base / "blastdb").mkdir()
+	(base / "blastdb" / "refseq_protein.pal").write_text("TITLE test\n")
 	env = base / ".env"
 	env.write_text("\n".join([
 		"flags3_bin=" + str(ROOT / "tests" / "fake_flags3.py"),
@@ -62,6 +64,7 @@ def workspace(tmp_path_factory):
 		"results_ttl_hours=1",
 		"cpu_per_job=2",
 		"max_lines=5",
+		"blast_db=" + str(base / "blastdb" / "refseq_protein"),
 		"site_url=https://flags.example.org/",
 		"smtp_user=robot@example.org",
 		"mail_from=lab@example.org",

@@ -1,6 +1,9 @@
+import os
 import re
 from dataclasses import dataclass, field
 from typing import Optional
+
+from blastinput import BlastQueries
 
 TOKEN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,59}$")
 EMAIL = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
@@ -13,6 +16,8 @@ JACKHMMER = "jackhmmer"
 MMSEQS = "mmseqs_cluster"
 METHODS = (JACKHMMER, MMSEQS)
 SCAN_RANGE = (5000, 200000)
+BLAST_MARK = "BLAST"
+MIN_BLAST_HITS = 2
 
 
 @dataclass(frozen=True)
@@ -36,6 +41,7 @@ SCANNERS = (
 @dataclass
 class Submission:
 	lines: list[str] = field(default_factory=list)
+	blast: list[str] = field(default_factory=list)
 	gene: int = 4
 	method: str = JACKHMMER
 	iterations: int = 3
@@ -53,6 +59,7 @@ class Submission:
 	run_name: str = "flags3_run"
 	errors: dict[str, str] = field(default_factory=dict)
 	raw: str = ""
+	blast_raw: str = ""
 
 	@property
 	def accepted(self) -> bool:
@@ -62,8 +69,16 @@ class Submission:
 	def list_text(self) -> str:
 		return self.raw if self.errors else "\n".join(self.lines)
 
+	@property
+	def blast_text(self) -> str:
+		return self.blast_raw if (self.errors or not self.blast) else "\n".join(self.blast)
+
+	@property
+	def input_text(self) -> str:
+		return "\n".join(self.lines + ["{}\t{}".format(query, BLAST_MARK) for query in self.blast])
+
 	def to_dict(self) -> dict:
-		return {k: v for k, v in self.__dict__.items() if k not in ("errors", "raw")}
+		return {k: v for k, v in self.__dict__.items() if k not in ("errors", "raw", "blast_raw")}
 
 	@classmethod
 	def from_dict(cls, values: dict) -> "Submission":
@@ -71,14 +86,21 @@ class Submission:
 
 
 class Validator:
-	def __init__(self, max_lines: int, capabilities):
+	def __init__(self, max_lines: int, capabilities, max_blast: int = 5):
 		self.max_lines = max_lines
 		self.capabilities = capabilities
+		self.max_blast = max_blast
 
 	def parse(self, form, upload_text: str = "") -> Submission:
 		s = Submission()
+		if self.capabilities.has("blast"):
+			s.blast_raw = form.get("blast", "")
+			found = BlastQueries(self.max_blast).parse(s.blast_raw)
+			s.blast = found.queries
+			if found.error:
+				s.errors["blast"] = found.error
 		s.raw = upload_text if upload_text.strip() else form.get("accessions", "")
-		s.lines, line_error = self._lines(s.raw)
+		s.lines, line_error = self._lines(s.raw, optional=bool(s.blast) and "blast" not in s.errors)
 		if line_error:
 			s.errors["accessions"] = line_error
 		s.gene = self._integer(form, "gene", s.gene, GENE_RANGE, s.errors)
@@ -110,7 +132,7 @@ class Validator:
 			s.errors["run_name"] = "Letters, digits, '-' and '_' only, up to 40 characters."
 		return s
 
-	def _lines(self, raw: str) -> tuple[list[str], str]:
+	def _lines(self, raw: str, optional: bool = False) -> tuple[list[str], str]:
 		lines = []
 		bad = []
 		for line in raw.replace("\r", "").split("\n"):
@@ -126,7 +148,7 @@ class Validator:
 			shown = ", ".join("<b>{}</b>".format(_escape(b)) for b in bad[:5])
 			more = " and {} more".format(len(bad) - 5) if len(bad) > 5 else ""
 			return lines, "These lines are not an accession or an accession–assembly pair: {}{}.".format(shown, more)
-		if not lines:
+		if not lines and not optional:
 			return lines, "Give at least one protein accession."
 		if len(lines) > self.max_lines:
 			return lines, "{} queries given; the server takes at most {} per job.".format(len(lines), self.max_lines)
@@ -191,6 +213,10 @@ class Command:
 		argv += [sc.flag for sc in chosen]
 		if any(sc.windowed for sc in chosen):
 			argv += ["-sr", str(sub.scan_range)]
+		if sub.blast:
+			argv += ["-bm", "local", "-bd", s.blast_db, "-bh", str(max(MIN_BLAST_HITS, s.blast_total_hits // len(sub.blast)))]
+			if s.blast_exclude:
+				argv += ["-bx", s.blast_exclude]
 		if sub.clusters_legend:
 			argv.append("-pcl")
 		if sub.pdf:
@@ -203,4 +229,6 @@ class Command:
 		env["PYTHONUNBUFFERED"] = "1"
 		if self.settings.ncbi_api_key:
 			env["NCBI_API_KEY"] = self.settings.ncbi_api_key
+		if self.submission.blast:
+			env["BLASTDB"] = os.path.dirname(self.settings.blast_db)
 		return env

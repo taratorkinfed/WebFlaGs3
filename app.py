@@ -21,7 +21,7 @@ app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
 redis_connection = redis.from_url(settings.redis_url)
 queue = rq.Queue(name=settings.queue, connection=redis_connection)
 capabilities = Capabilities.probe(settings)
-validator = Validator(settings.max_lines, capabilities)
+validator = Validator(settings.max_lines, capabilities, settings.blast_max_queries)
 mail_enabled = Mailer(settings).enabled
 
 DEMO_FILE = "demo_list.txt"

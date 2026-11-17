@@ -2,7 +2,7 @@
 
 ## Shape
 
-Six Python files, five templates, no database beyond Redis.
+Seven Python files, five templates, no database beyond Redis.
 
 - `config.py` — `Settings`, read once from `.env` (python-dotenv). Nothing
   machine-specific or secret is in code; `DEFAULTS` are the lab server's paths.
@@ -47,7 +47,12 @@ Six Python files, five templates, no database beyond Redis.
   `flags3 --version` beside the listing. The protein clusters legend
   (`-pcl`, FlaGs3 3.6.0) is the first such feature, so its switch is
   disabled on a server whose FlaGs3 is older rather than failing the job on
-  an unknown option.
+  an unknown option. A feature may need both: BlastP needs FlaGs3 3.7.0,
+  the `core` component for `blastp`, and the database, which the probe
+  enters as the pseudo-component `blastdb` when `blast_db` in `.env` names
+  a path with a `.pal` or `.pin` file beside it.
+- `blastinput.py` — `BlastQueries`, the parser of the "Starting proteins"
+  box (see BlastP below).
 - `jobs.py` — `JobDir` (the layout of one job's directory), `Runner` (worker
   side: run the subprocess, stream its output into RQ meta, scrub, archive),
   `Sweeper` (delete expired job directories), `run_job` (the RQ entry point).
@@ -81,6 +86,49 @@ Six Python files, five templates, no database beyond Redis.
    directory; a script polls `GET /status/<id>` every two seconds, refreshes
    the log in place while the job runs, and reloads the page when the state
    changes.
+
+## BlastP
+
+The form can start a job from proteins instead of a finished list: FlaGs3
+searches a local database for their homologues and the hits become
+queries. The web app adds nothing to FlaGs3's own mechanism. Each starting
+protein is written to the job's `input.txt` as a line marked `BLAST`
+(`Submission.input_text`), and the command gets `-bm local -bd <blast_db>
+-bh <n> -bx <blast_exclude>`.
+
+The service is shaped so that it is of no use as a BLAST server, because a
+fast RefSeq search without a login would otherwise attract exactly that:
+
+- at most `blast_max_queries` (5) starting proteins a job;
+- `blast_total_hits` (50) hits a job in all. FlaGs3's `-bh` is per
+  starting protein, so `Command` passes the total divided by their number:
+  50, 25, 16, 12 or 10 each;
+- nothing of the search is returned but what FlaGs3 keeps for itself,
+  `blast/hits.tsv` (accession, E-value, bit score, description of the hits
+  that became queries) — no alignments, no other output format, and no
+  option on the form that reaches `blastp`: E-value and database are the
+  server's.
+
+`BlastQueries` reads the box line by line. An accession on a line of its
+own (RefSeq `WP_`/`NP_`/`YP_`/`XP_`/`AP_`, or an INSDC protein id) is a
+query; other lines are collected into a sequence until a FASTA header or
+an empty line ends it. Headers are dropped — FlaGs3's inline form has no
+place for a name — and a sequence is upper-cased, stripped of spaces and a
+final `*`, and must be 10 to 5000 residues of the amino-acid alphabet.
+What is written to `input.txt` is therefore an accession or one line of
+residues, never the user's text. With starting proteins the accession list
+may be empty.
+
+`blast_exclude` (2759, eukaryotes) is the reason for the FlaGs3 3.7.0
+requirement: the database is NCBI's whole `refseq_protein`, and the
+exclusion is applied at search time by `-bx`. `Command.environment` sets
+`BLASTDB` to the database's directory so that `blastp` finds
+`taxonomy4blast.sqlite3` there whatever its search path. The database path
+and its directory are replaced by `<blastdb>` in the live log and scrubbed
+from the run's files like the other server paths. An accession's sequence
+is fetched from NCBI by FlaGs3, so an accession start still depends on
+NCBI answering; a pasted sequence does not, until the hits are resolved to
+genomes.
 
 ## Email
 
@@ -183,7 +231,6 @@ wide figure, which is where the row labels and the system codes are.
 
 ## Not in v1
 
-A prioritised queue, a job list page, and three FlaGs3 features left out
-on purpose: BLAST-mode input (a local database needs a decision on where
-tens of GB live), DeepTMHMM and SignalP (BioLib login or licensed local
+A prioritised queue, a job list page, and two FlaGs3 features left out
+on purpose: DeepTMHMM and SignalP (BioLib login or licensed local
 installs).

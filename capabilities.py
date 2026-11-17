@@ -11,10 +11,14 @@ FEATURES = {
 	"genomad": ("genomad",),
 	"plasmidfinder": ("plasmidfinder", "core"),
 	"sismis": ("sismis",),
+	"blast": ("core", "blastdb"),
 }
 SINCE = {
 	"clusters_legend": (3, 6, 0),
+	"blast": (3, 7, 0),
 }
+BLAST_DATABASE = "blastdb"
+DATABASE_FILES = (".pal", ".pin")
 COMPONENTS = {name for needed in FEATURES.values() for name in needed}
 ABSENT = "-"
 PROBE_TIMEOUT = 120
@@ -28,14 +32,15 @@ class Capabilities:
 		self.version = tuple(version)
 
 	def has(self, feature: str) -> bool:
-		if feature in SINCE:
-			return self.version >= SINCE[feature]
-		needed = FEATURES.get(feature)
-		return bool(needed) and all(name in self.installed for name in needed)
+		if feature not in FEATURES and feature not in SINCE:
+			return False
+		if self.version < SINCE.get(feature, UNKNOWN):
+			return False
+		return all(name in self.installed for name in FEATURES.get(feature, ()))
 
 	@property
 	def features(self) -> list[str]:
-		return [feature for feature in list(FEATURES) + list(SINCE) if self.has(feature)]
+		return [feature for feature in dict.fromkeys(list(FEATURES) + list(SINCE)) if self.has(feature)]
 
 	@property
 	def version_text(self) -> str:
@@ -59,7 +64,10 @@ class Capabilities:
 	def probe(cls, settings) -> "Capabilities":
 		env = dict(os.environ)
 		env["FLAGS3_HOME"] = str(settings.flags3_home)
-		return cls.parse(cls._output(settings, env, "install"), cls._output(settings, env, "--version"))
+		found = cls.parse(cls._output(settings, env, "install"), cls._output(settings, env, "--version"))
+		if settings.blast_db and any(os.path.isfile(settings.blast_db + suffix) for suffix in DATABASE_FILES):
+			found.installed.add(BLAST_DATABASE)
+		return found
 
 	@staticmethod
 	def _output(settings, env, argument: str) -> str:
