@@ -99,6 +99,11 @@ def main() -> int:
 	(out / "config.tsv").write_text("api_key\t{}\nuser_email\t{}\n".format(args.api or "", args.u))
 	(out / "console.log").write_text(">> fetch\n")
 	print("run directory: {}".format(out), flush=True)
+	if any("SOFT" in l for l in lines):
+		(out / "tree").mkdir()
+		(out / "tree" / "status.tsv").write_text("status\tfailed\nerror\tTreeError: a tree needs at least 3 query sequences, the run has 2\n")
+		(out / "figures" / "status.tsv").write_text("status\tok\nseconds\t0.01\n")
+		return 1
 	return 0
 
 

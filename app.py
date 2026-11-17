@@ -128,6 +128,7 @@ def results(job_id: str):
 	status = JobStatus(job)
 	figures = job_dir.figure_views() if status.status == "finished" else []
 	return _page("results.html", job_id=job_id, status=status, job_dir=job_dir, figures=figures,
+		failed_steps=job_dir.failed_steps() if status.status == "finished" else [],
 		summary=job_dir.summary() if status.status == "finished" else "", submission=job_dir.submission())
 
 

@@ -289,3 +289,19 @@ wide figure, which is where the row labels and the system codes are.
 A prioritised queue, a job list page, and two FlaGs3 features left out
 on purpose: DeepTMHMM and SignalP (BioLib login or licensed local
 installs).
+
+## A failed optional step
+
+FlaGs3 exits with status 1 when any stage failed, including an optional one
+it carried on without (a tree of two queries, a scanner that crashed): the run
+is complete and has its report and figures, but the exit status alone would
+make the job "failed" and hide them. `Runner.run` therefore raises only when
+the status is non-zero and the run is not complete, and complete means what
+FlaGs3 itself records: `figures/status.tsv`, the status file of the last
+stage, says `ok` (`JobDir.completed`). A mandatory stage that fails stops the
+run before figures, so it is still a failed job.
+
+The results page then names the steps that failed, from the `status` and
+`error` lines of every `<stage>/status.tsv` (`JobDir.failed_steps`), in a
+warning box above the figures. Nothing is stored for this: the page reads the
+run directory, as it does for the figures.

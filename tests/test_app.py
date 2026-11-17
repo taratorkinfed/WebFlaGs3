@@ -163,3 +163,16 @@ def test_example_output_section(client):
 	for name in ("neighbors", "tree", "domains", "defence", "genomad", "all-in-one", "classic"):
 		svg = client.get("/static/img/examples/{}.svg".format(name))
 		assert svg.status_code == 200 and svg.mimetype == "image/svg+xml", name
+
+
+def test_a_failed_optional_step_is_a_notice_not_a_failed_job(client, flask_app):
+	job_id = client.post("/", data={**FORM, "accessions": "WP_SOFT.1\nWP_000002.1"}).headers["Location"].rsplit("/", 1)[1]
+	_work(flask_app)
+	assert client.get("/status/" + job_id).get_json()["status"] == "finished"
+	page = client.get("/results/" + job_id).data.decode()
+	assert "did not finish" not in page and "one step failed" in page
+	assert "<span class=\"fw-medium\">tree</span>: TreeError: a tree needs at least 3 query sequences, the run has 2" in page
+	assert "figures/neighbors.svg" in page and client.get("/download/" + job_id).status_code == 200
+	clean = client.post("/", data=FORM).headers["Location"].rsplit("/", 1)[1]
+	_work(flask_app)
+	assert "alert-warning" not in client.get("/results/" + clean).data.decode()

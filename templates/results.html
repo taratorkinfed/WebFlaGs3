@@ -50,6 +50,16 @@
 					</div>
 				{% endif %}
 				{% if status.status == "finished" %}
+					{% if failed_steps %}
+						<div class="col-12">
+							<div class="alert alert-warning" role="alert">
+								<p class="mb-1 fw-medium">The job finished, but {% if failed_steps|length == 1 %}one step{% else %}{{ failed_steps|length }} steps{% endif %} failed; everything else is below.</p>
+								<ul class="mb-0">
+									{% for step, error in failed_steps %}<li><span class="fw-medium">{{ step }}</span>: {{ error or "no reason recorded" }}</li>{% endfor %}
+								</ul>
+							</div>
+						</div>
+					{% endif %}
 					<hr>
 					<div class="col-12">
 						<h2>Figures</h2>

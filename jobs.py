@@ -30,6 +30,10 @@ class FigureView:
 	systems_summary: Optional[str]
 
 
+STAGE_STATUS = "status.tsv"
+STAGE_OK = "ok"
+STAGE_FAILED = "failed"
+LAST_STAGE = "figures"
 LOG_LIMIT = 200_000
 SAVE_INTERVAL = 0.5
 SCRUBBED_FILES = ("run.tsv", "config.tsv", "console.log", "report/run_summary.txt", "report/digest.md")
@@ -107,6 +111,20 @@ class JobDir:
 		path = self.report_dir / "run_summary.txt"
 		return path.read_text(errors="replace") if path.is_file() else ""
 
+	def stage_statuses(self) -> dict[str, tuple[str, str]]:
+		found = {}
+		for path in sorted(self.run_dir.glob("*/" + STAGE_STATUS)):
+			values = dict(line.split("\t", 1) for line in path.read_text(errors="replace").splitlines() if "\t" in line)
+			found[path.parent.name] = (values.get("status", ""), values.get("error", ""))
+		return found
+
+	@property
+	def completed(self) -> bool:
+		return self.stage_statuses().get(LAST_STAGE, ("", ""))[0] == STAGE_OK
+
+	def failed_steps(self) -> list[tuple[str, str]]:
+		return [(name, error) for name, (status, error) in self.stage_statuses().items() if status == STAGE_FAILED]
+
 	def served_file(self, relative: str) -> Path:
 		return self.run_dir / relative
 
@@ -181,7 +199,7 @@ class Runner:
 				os.path.dirname(self.settings.blast_db)]).scrub(self.job_dir.run_dir)
 		sink.save(force=True)
 		self.job_dir.log_file.write_text(sink.text)
-		if code != 0:
+		if code != 0 and not self.job_dir.completed:
 			raise RuntimeError("flags3 exited with status {}".format(code))
 		archive = self._archive(submission.run_name)
 		return {"run_name": submission.run_name, "archive": archive.name, "figures": self.job_dir.figures()}
