@@ -125,10 +125,11 @@
 					<label for="tree" class="form-label">Phylogenetic tree of the queries</label>
 					<select class="form-select" id="tree" name="tree" {% if not capabilities.has("tree") %}disabled{% endif %}>
 						<option value="tree_order" {% if submission.tree == "tree_order" and capabilities.has("tree") %}selected{% endif %}>Tree, rows in tree order</option>
+						{% if capabilities.has("synteny") %}<option value="synteny" {% if submission.tree == "synteny" %}selected{% endif %}>Tree, rows in tree order, with synteny</option>{% endif %}
 						<option value="tree" {% if submission.tree == "tree" and capabilities.has("tree") %}selected{% endif %}>Tree, rows in input order</option>
 						<option value="none" {% if submission.tree == "none" or not capabilities.has("tree") %}selected{% endif %}>No tree</option>
 					</select>
-					<div class="form-text">{% if capabilities.has("tree") %}mafft, trimAl and VeryFastTree; adds minutes for large lists.{% else %}Not available on this server yet.{% endif %}</div>
+					<div class="form-text">{% if capabilities.has("tree") %}mafft, trimAl and VeryFastTree; adds minutes for large lists.{% if capabilities.has("synteny") %} Synteny compares the DNA of each neighbourhood with the next one in the tree (blastn) and draws the shared blocks as pale blue ribbons in the all-in-one figure.{% endif %}{% else %}Not available on this server yet.{% endif %}</div>
 				</div>
 				<div class="col-md-4">
 					<div class="form-check form-switch mt-md-4 pt-md-2">

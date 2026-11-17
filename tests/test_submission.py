@@ -129,3 +129,16 @@ def test_defaults_are_tree_order_and_legend_only_where_available():
 	assert posted.tree == "none" and not posted.clusters_legend
 	missing = {k: v for k, v in _form().items() if k != "tree"}
 	assert Validator(200, ALL).parse(missing).tree == "none"
+
+
+def test_synteny_is_a_tree_choice_from_flags3_3_8(tmp_path):
+	settings = Settings({"flags3_bin": "/opt/flags3", "flags3_home": str(tmp_path)})
+	new = Validator(200, Capabilities({"core"}, (3, 8, 0))).parse(_form(tree="synteny"))
+	argv = Command(settings, new, "a", "b").argv()
+	assert new.accepted and new.tree == "synteny" and "-sy" in argv and "-to" not in argv and "-t" not in argv
+	old = Validator(200, Capabilities({"core"}, (3, 7, 0))).parse(_form(tree="synteny"))
+	argv = Command(settings, old, "a", "b").argv()
+	assert old.accepted and old.tree == "tree_order" and "-to" in argv and "-sy" not in argv
+	bare = Validator(200, Capabilities(set(), (3, 8, 0))).parse(_form(tree="synteny"))
+	assert bare.tree == "none" and not Capabilities(set(), (3, 8, 0)).has("synteny")
+	assert Capabilities.everything().has("synteny") and Validator(200, Capabilities.everything()).parse(_form()).tree != "synteny"

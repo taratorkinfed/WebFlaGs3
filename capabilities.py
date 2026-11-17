@@ -12,10 +12,12 @@ FEATURES = {
 	"plasmidfinder": ("plasmidfinder", "core"),
 	"sismis": ("sismis",),
 	"blast": ("core", "blastdb"),
+	"synteny": ("core",),
 }
 SINCE = {
 	"clusters_legend": (3, 6, 0),
 	"blast": (3, 7, 0),
+	"synteny": (3, 8, 0),
 }
 BLAST_DATABASE = "blastdb"
 DATABASE_FILES = (".pal", ".pin")

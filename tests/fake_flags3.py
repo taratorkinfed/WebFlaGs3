@@ -41,6 +41,7 @@ def main() -> int:
 	parser.add_argument("-cm")
 	parser.add_argument("-t", action="store_true")
 	parser.add_argument("-to", action="store_true")
+	parser.add_argument("-sy", action="store_true")
 	parser.add_argument("-d", action="store_true")
 	parser.add_argument("-df", action="store_true")
 	parser.add_argument("-pl", action="store_true")

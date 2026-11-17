@@ -8,7 +8,8 @@ from blastinput import BlastQueries
 TOKEN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,59}$")
 EMAIL = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 RUN_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$")
-TREE_CHOICES = ("none", "tree", "tree_order")
+TREE_CHOICES = ("none", "tree", "tree_order", "synteny")
+TREE_FLAGS = {"tree": "-t", "tree_order": "-to", "synteny": "-sy"}
 GENE_RANGE = (1, 20)
 ITERATION_RANGE = (1, 10)
 EVALUE_RANGE = (1e-100, 1.0)
@@ -116,6 +117,8 @@ class Validator:
 			s.errors["tree"] = "Unknown tree option."
 		elif not self.capabilities.has("tree"):
 			s.tree = "none"
+		elif s.tree == "synteny" and not self.capabilities.has("synteny"):
+			s.tree = "tree_order"
 		s.domains = bool(form.get("domains")) and self.capabilities.has("domains")
 		s.rna = bool(form.get("rna"))
 		s.digest = bool(form.get("digest"))
@@ -199,10 +202,8 @@ class Command:
 			argv += ["-n", str(sub.iterations)]
 		if sub.evalue is not None:
 			argv += ["-ce", "{:g}".format(sub.evalue)]
-		if sub.tree == "tree":
-			argv.append("-t")
-		elif sub.tree == "tree_order":
-			argv.append("-to")
+		if sub.tree in TREE_FLAGS:
+			argv.append(TREE_FLAGS[sub.tree])
 		if sub.domains:
 			argv.append("-d")
 		if sub.rna:
