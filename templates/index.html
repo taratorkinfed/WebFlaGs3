@@ -124,9 +124,9 @@
 				<div class="col-md-4">
 					<label for="tree" class="form-label">Phylogenetic tree of the queries</label>
 					<select class="form-select" id="tree" name="tree" {% if not capabilities.has("tree") %}disabled{% endif %}>
-						<option value="none" {% if submission.tree == "none" %}selected{% endif %}>No tree</option>
-						<option value="tree" {% if submission.tree == "tree" %}selected{% endif %}>Tree, rows in input order</option>
-						<option value="tree_order" {% if submission.tree == "tree_order" %}selected{% endif %}>Tree, rows in tree order</option>
+						<option value="tree_order" {% if submission.tree == "tree_order" and capabilities.has("tree") %}selected{% endif %}>Tree, rows in tree order</option>
+						<option value="tree" {% if submission.tree == "tree" and capabilities.has("tree") %}selected{% endif %}>Tree, rows in input order</option>
+						<option value="none" {% if submission.tree == "none" or not capabilities.has("tree") %}selected{% endif %}>No tree</option>
 					</select>
 					<div class="form-text">{% if capabilities.has("tree") %}mafft, trimAl and VeryFastTree; adds minutes for large lists.{% else %}Not available on this server yet.{% endif %}</div>
 				</div>
@@ -154,7 +154,7 @@
 				<div class="col-md-4">
 					<div class="form-check form-switch">
 						<input class="form-check-input" type="checkbox" id="clusters_legend" name="clusters_legend" value="1"
-							{% if submission.clusters_legend %}checked{% endif %} {% if not capabilities.has("clusters_legend") %}disabled{% endif %}>
+							{% if submission.clusters_legend and capabilities.has("clusters_legend") %}checked{% endif %} {% if not capabilities.has("clusters_legend") %}disabled{% endif %}>
 						<label class="form-check-label" for="clusters_legend">Protein clusters legend in the figures</label>
 					</div>
 					<div class="form-text">{% if capabilities.has("clusters_legend") %}Every family's product names under the neighbors and all-in-one figures.{% else %}Not available on this server yet.{% endif %}</div>

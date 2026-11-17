@@ -119,3 +119,13 @@ def test_command_argv(tmp_path):
 	assert env["NCBI_API_KEY"] == "KEY"
 	settings = Settings({"flags3_bin": "/opt/flags3", "flags3_home": str(tmp_path)})
 	assert "NCBI_API_KEY" not in Command(settings, s, "a", "b").environment({})
+
+
+def test_defaults_are_tree_order_and_legend_only_where_available():
+	from submission import Submission
+	fresh = Submission()
+	assert fresh.tree == "tree_order" and fresh.clusters_legend
+	posted = Validator(200, ALL).parse(_form())
+	assert posted.tree == "none" and not posted.clusters_legend
+	missing = {k: v for k, v in _form().items() if k != "tree"}
+	assert Validator(200, ALL).parse(missing).tree == "none"

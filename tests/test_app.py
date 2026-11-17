@@ -26,6 +26,17 @@ def test_form_page_and_demo(client):
 	assert b"WP_053886483.1" in demo.data and b"WP_040110778.1" in demo.data
 
 
+def test_tree_order_and_clusters_legend_are_the_defaults(client, flask_app):
+	html = client.get("/").data.decode()
+	assert '<option value="tree_order" selected>' in html and '<option value="none" >' in html
+	assert 'id="clusters_legend" name="clusters_legend" value="1"\n\t\t\t\t\t\t\tchecked' in html
+	minimal = {k: v for k, v in FORM.items() if k != "tree"}
+	job_id = client.post("/", data={**minimal, "tree": "none"}).headers["Location"].rsplit("/", 1)[1]
+	_work(flask_app)
+	log = client.get("/status/" + job_id).get_json()["log"]
+	assert " -to" not in log and " -t " not in log and "-pcl" not in log
+
+
 def test_form_says_non_coding_rna(client):
 	page = client.get("/")
 	assert b"non-coding RNA" in page.data and b"RNA genes" not in page.data

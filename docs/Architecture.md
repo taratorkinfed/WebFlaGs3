@@ -89,6 +89,17 @@ Eight Python files, five templates, no database beyond Redis.
    the log in place while the job runs, and reloads the page when the state
    changes.
 
+## Form defaults
+
+A fresh form has the tree on, with rows in tree order, and the protein
+clusters legend ticked. Both were opt-in at first; in the first days of
+testing every user turned the tree on, some reran a finished job to get it,
+and it costs seconds. The defaults are the field defaults of `Submission`,
+which is what `GET /` renders; a posted form is read as sent, so unticking
+or choosing "No tree" is respected. A default the server's FlaGs3 cannot
+deliver is shown off and disabled, not ticked and greyed. A job without a
+tree still gets the all-in-one figure from FlaGs3 3.7.0 on.
+
 ## BlastP
 
 The form can start a job from proteins instead of a finished list: FlaGs3

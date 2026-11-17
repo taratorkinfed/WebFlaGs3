@@ -46,13 +46,13 @@ class Submission:
 	method: str = JACKHMMER
 	iterations: int = 3
 	evalue: Optional[float] = None
-	tree: str = "none"
+	tree: str = "tree_order"
 	domains: bool = False
 	rna: bool = False
 	digest: bool = False
 	scanners: list[str] = field(default_factory=list)
 	scan_range: int = 20000
-	clusters_legend: bool = False
+	clusters_legend: bool = True
 	pdf: bool = True
 	notify: bool = True
 	email: str = ""
